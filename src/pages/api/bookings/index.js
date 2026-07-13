@@ -30,7 +30,7 @@ async function handler(req, res) {
         return res.status(400).json({ message: 'Semua field wajib diisi.' });
       }
 
-      // Validasi waktu: parseable dan start < end (cegah interval terbalik lolos cek bentrok).
+      // Validasi waktu: parseable, start < end, tidak di masa lalu, durasi wajar.
       const startMs = Date.parse(start_time);
       const endMs = Date.parse(end_time);
       if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
@@ -38,6 +38,14 @@ async function handler(req, res) {
       }
       if (startMs >= endMs) {
         return res.status(400).json({ message: 'Waktu mulai harus sebelum waktu selesai.' });
+      }
+      const GRACE_MS = 5 * 60 * 1000; // toleransi 5 menit untuk selisih jam
+      if (startMs < Date.now() - GRACE_MS) {
+        return res.status(400).json({ message: 'Tidak bisa membuat booking di masa lalu.' });
+      }
+      const MAX_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // maksimal 7 hari per booking
+      if (endMs - startMs > MAX_DURATION_MS) {
+        return res.status(400).json({ message: 'Durasi booking maksimal 7 hari.' });
       }
 
       // Approver dari struktur organisasi Lark (disinkron saat login).
@@ -49,9 +57,13 @@ async function handler(req, res) {
       const hasSupervisor = !!requester.leader_user_id;
       const initialStatus = hasSupervisor ? 'Pending Supervisor' : 'Pending GA';
 
-      // Insert atomik: baris hanya masuk bila TIDAK ada booking bentrok (strict overlap,
-      // booking Rejected diabaikan). numDmlAffectedRows = 0 → bentrok. Menghilangkan
-      // race check-then-insert dua permintaan bersamaan.
+      // Cek bentrok dalam satu statement INSERT ... WHERE NOT EXISTS (strict overlap;
+      // booking Rejected/Cancelled diabaikan). numDmlAffectedRows = 0 → bentrok.
+      // Catatan: BigQuery memakai snapshot isolation, jadi ini menutup race untuk
+      // pengajuan yang tidak benar-benar bersamaan, TAPI dua INSERT yang tumpang-tindih
+      // dalam window job yang sama bisa lolos keduanya (BigQuery bukan OLTP, tanpa
+      // unique constraint). Untuk tool internal volume kecil + gerbang approval GA,
+      // risiko ini kecil dan bisa ditangkap manual saat approval.
       const insertQuery = `
         INSERT INTO \`${DATASET}.bookings\`
           (id, vehicle_id, requester_id, user_name, user_level,
@@ -66,6 +78,7 @@ async function handler(req, res) {
           SELECT 1 FROM \`${DATASET}.bookings\`
           WHERE vehicle_id = @vehicle_id
             AND status NOT LIKE 'Rejected%'
+            AND status NOT LIKE 'Cancelled%'
             AND start_time < TIMESTAMP(@end_time)
             AND end_time > TIMESTAMP(@start_time)
         )`;

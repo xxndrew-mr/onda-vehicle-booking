@@ -12,6 +12,8 @@ const DATASET = 'onda_booking_db';
  *   Pending Supervisor --REJECT---> Rejected By Supervisor
  *   Pending GA         --APPROVE--> Approved     (oleh role GA / ADMIN)
  *   Pending GA         --REJECT---> Rejected By GA
+ * CANCEL: pemohon (atau ADMIN) membatalkan booking-nya sendiri yang masih aktif
+ *   (Pending Supervisor / Pending GA / Approved) --CANCEL--> Cancelled By User.
  */
 async function handler(req, res) {
   const { id } = req.query;
@@ -21,9 +23,9 @@ async function handler(req, res) {
     return res.status(405).json({ message: `Method ${req.method} tidak diizinkan.` });
   }
 
-  const { action } = req.body || {}; // 'APPROVE' | 'REJECT'
-  if (action !== 'APPROVE' && action !== 'REJECT') {
-    return res.status(400).json({ message: 'Action tidak valid (APPROVE/REJECT).' });
+  const { action } = req.body || {}; // 'APPROVE' | 'REJECT' | 'CANCEL'
+  if (!['APPROVE', 'REJECT', 'CANCEL'].includes(action)) {
+    return res.status(400).json({ message: 'Action tidak valid (APPROVE/REJECT/CANCEL).' });
   }
 
   try {
@@ -38,7 +40,7 @@ async function handler(req, res) {
 
     // Ambil booking saat ini
     const [rows] = await bigquery.query({
-      query: `SELECT status, supervisor_id FROM \`${DATASET}.bookings\` WHERE id = @id`,
+      query: `SELECT status, supervisor_id, requester_id FROM \`${DATASET}.bookings\` WHERE id = @id`,
       params: { id },
     });
 
@@ -48,6 +50,29 @@ async function handler(req, res) {
 
     const booking = rows[0];
     const currentStatus = booking.status;
+
+    // --- Pembatalan oleh pemohon (atau ADMIN) ---
+    if (action === 'CANCEL') {
+      const isOwner = booking.requester_id && booking.requester_id === me.lark_user_id;
+      if (!isOwner && !isAdmin) {
+        return res.status(403).json({ message: 'Hanya pemohon yang bisa membatalkan booking ini.' });
+      }
+      if (!['Pending Supervisor', 'Pending GA', 'Approved'].includes(currentStatus)) {
+        return res.status(409).json({
+          message: `Booking tidak bisa dibatalkan (status: ${currentStatus}).`,
+        });
+      }
+      const affected = await runDml(
+        `UPDATE \`${DATASET}.bookings\` SET status = 'Cancelled By User'
+         WHERE id = @id AND status = @expected`,
+        { id, expected: currentStatus }
+      );
+      if (affected === 0) {
+        return res.status(409).json({ message: 'Booking baru saja berubah. Muat ulang halaman.' });
+      }
+      return res.status(200).json({ message: 'Booking dibatalkan.' });
+    }
+
     let nextStatus;
     let stageField; // kolom audit yang di-update
 

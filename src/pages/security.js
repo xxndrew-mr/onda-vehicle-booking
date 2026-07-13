@@ -6,7 +6,7 @@ import { getJson } from '../lib/api';
 function isActiveToday(b) {
   const start = b.start_time?.value ? new Date(b.start_time.value) : null;
   const end = b.end_time?.value ? new Date(b.end_time.value) : null;
-  if (!start || !end || Number.isNaN(start) || Number.isNaN(end)) return false;
+  if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
 
   const now = new Date();
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

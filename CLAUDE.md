@@ -39,14 +39,15 @@ Next.js 16 **Pages Router** (jangan buat `src/app/` — konflik route). React 19
 
 ## Status State Machine (kontrak antar-komponen, jangan diubah sepihak)
 
-String status dipakai oleh API, halaman approval, security (filter `Approved`), dan warna kalender (`Rejected*` merah, `Approved` hijau, sisanya kuning):
+String status dipakai oleh API, halaman approval, security (filter `Approved`), dan warna kalender (`Rejected*` merah, `Cancelled*` abu-abu, `Approved` hijau, sisanya kuning):
 
 - Booking baru: pemohon punya `leader_user_id` di Lark → `Pending Supervisor` (dengan `supervisor_id`); tidak punya → `Pending GA`
 - `Pending Supervisor`: hanya user dengan open_id == `supervisor_id` (atau ADMIN). APPROVE → `Pending GA`; REJECT → `Rejected By Supervisor`
 - `Pending GA`: hanya role GA/ADMIN. APPROVE → `Approved`; REJECT → `Rejected By GA`
-- Setiap transisi menulis audit `{supervisor|ga}_action_by/_at`
+- CANCEL: pemohon (open_id == `requester_id`) atau ADMIN, dari status aktif (`Pending*`/`Approved`) → `Cancelled By User`. Slot dibebaskan.
+- Setiap transisi approval menulis audit `{supervisor|ga}_action_by/_at`
 
-Otorisasi tahap supervisor = pencocokan `supervisor_id`, BUKAN role. Role hanya untuk gerbang GA/ADMIN dan tampilan.
+Cek bentrok mengabaikan status `Rejected*` DAN `Cancelled*`. Otorisasi tahap supervisor = pencocokan `supervisor_id`, BUKAN role. Role hanya untuk gerbang GA/ADMIN dan tampilan.
 
 ## Lark Gotchas
 
@@ -60,7 +61,7 @@ Otorisasi tahap supervisor = pencocokan `supervisor_id`, BUKAN role. Role hanya 
 ## BigQuery Gotchas
 
 - **INSERT harus DML query, bukan `table.insert()`** — streaming buffer tidak bisa di-UPDATE (~90 menit), padahal approval memakai UPDATE. Upsert users memakai MERGE (juga DML).
-- **Operasi atomik pakai `runDml()`** (named export di `bigquery.js`) yang mengembalikan `numDmlAffectedRows`. Booking insert = `INSERT ... SELECT ... WHERE NOT EXISTS (bentrok)` → 0 baris = bentrok (bebas race). Approval = `UPDATE ... WHERE id=@id AND status=@expected` → 0 baris = sudah diproses orang lain (409).
+- **Operasi bersyarat pakai `runDml()`** (named export di `bigquery.js`) yang mengembalikan `numDmlAffectedRows`. Booking insert = `INSERT ... SELECT ... WHERE NOT EXISTS (bentrok)` → 0 baris = bentrok. Approval = `UPDATE ... WHERE id=@id AND status=@expected` → 0 baris = sudah diproses orang lain (409). CATATAN: UPDATE ke baris sama benar-benar serialize (snapshot isolation), jadi cek approval bebas race. Tapi INSERT append-only TIDAK saling konflik — dua booking tumpang-tindih dalam window job yang sama bisa lolos keduanya; cek bentrok ini best-effort (BigQuery bukan OLTP, tanpa unique constraint), diterima untuk tool internal volume kecil + gerbang approval GA.
 - Otorisasi approval membaca role dari `getUserByLarkId()` (tabel users), BUKAN klaim JWT — supaya revocation Lark berlaku cepat.
 - Kolom TIMESTAMP vs parameter string → wajib cast `TIMESTAMP(@param)`.
 - Timestamp hasil query dikirim ke frontend sebagai objek `{ value: "ISO" }` — frontend baca `b.start_time.value`.

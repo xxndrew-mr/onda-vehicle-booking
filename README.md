@@ -166,8 +166,8 @@ UPDATE onda_booking_db.bookings SET status = 'Rejected By Supervisor'
 Semua langkah di https://open.larksuite.com/app :
 
 1. **Create Custom App** (aplikasi internal perusahaan) → isi nama "Vehicle Booking", deskripsi, ikon.
-2. **Add Features → Web App** → set **Desktop & Mobile homepage URL** = URL publik aplikasi ini (mis. `https://booking.onda.co.id`). Saat development boleh URL ngrok/intranet; produksi wajib URL publik.
-3. **Security Settings → Redirect URLs** → daftarkan **persis** `https://booking.onda.co.id/api/auth/callback` (`redirect_uri` dicocokkan **exact** dengan nilai terdaftar, tanpa wildcard — pastikan `APP_BASE_URL` sama persis dengan host yang didaftarkan).
+2. **Add Features → Web App** → set **Desktop & Mobile homepage URL** = URL publik aplikasi ini (mis. `https://booking-mobil.onda.works`). Saat development boleh URL ngrok/intranet; produksi wajib URL publik.
+3. **Security Settings → Redirect URLs** → daftarkan **persis** `https://booking-mobil.onda.works/api/auth/callback` (`redirect_uri` dicocokkan **exact** dengan nilai terdaftar, tanpa wildcard — pastikan `APP_BASE_URL` sama persis dengan host yang didaftarkan).
 4. **Permissions & Scopes** → grant scope berikut (lalu apply):
    - `contact:contact:readonly_as_app` — baca user & departemen sebagai aplikasi (mencakup `leader_user_id`, `department_ids`, `job_title`, `employee_no`, `enterprise_email`)
    - `contact:user.email:readonly` — email pribadi user (opsional; untuk mapping `ADMIN_EMAILS` bila tidak memakai email perusahaan)
@@ -218,7 +218,7 @@ Semua endpoint (kecuali `/api/auth/*`) memerlukan session; tanpa session → `40
 | `GET` | `/api/bookings` | Semua booking (kalender) + nama kendaraan & plat |
 | `POST` | `/api/bookings` | Buat booking `{ vehicle_id, start_time, end_time, purpose }` — pemohon & supervisor otomatis dari session/Lark; 409 jika bentrok |
 | `GET` | `/api/bookings/pending` | Antrian saya: `{ supervisorQueue, gaQueue, role }` |
-| `PATCH` | `/api/bookings/:id` | `{ action: "APPROVE"\|"REJECT" }` — tahap & otorisasi ditentukan server |
+| `PATCH` | `/api/bookings/:id` | `{ action: "APPROVE"\|"REJECT"\|"CANCEL" }` — tahap & otorisasi ditentukan server; CANCEL oleh pemohon/ADMIN membebaskan slot |
 
 ### Proses sinkronisasi user
 
@@ -259,7 +259,7 @@ src/
 - OAuth `state` diverifikasi via cookie nonce (anti-CSRF); `redirect_to` divalidasi ketat hanya path internal — menolak URL absolut, `//`, dan bypass backslash `/\` (anti open-redirect).
 - Endpoint `POST /api/auth/login` (jalur JSAPI) menolak permintaan lintas-situs (`Sec-Fetch-Site`/`Origin`) untuk mencegah login-CSRF/session fixation.
 - Pesan error internal (nama env, error BigQuery/Lark) hanya masuk log server; user menerima pesan generik.
-- Otorisasi approval dicek server-side per tahap dengan role terkini dari DB; transisi status memakai precondition (`WHERE status = @expected`) sehingga bebas race double-approve.
+- Otorisasi approval dicek server-side per tahap dengan role terkini dari DB; transisi status memakai precondition (`WHERE status = @expected`) sehingga bebas race double-approve. Cek bentrok saat buat booking bersifat best-effort (BigQuery bukan OLTP) — cukup untuk pemakaian internal, dengan gerbang approval GA sebagai lapis kedua.
 - `App Secret`, private key GCP, dan token Lark tidak pernah menyentuh frontend.
 
 ## Keterbatasan & Langkah Lanjutan
@@ -267,3 +267,6 @@ src/
 - Notifikasi Lark (kirim pesan bot ke supervisor saat ada pengajuan, ke pemohon saat disetujui) belum ada — kandidat berikutnya via `im:message` API.
 - Data user disinkron saat login; jika butuh sinkronisasi berkala massal, tambahkan cron yang menelusuri `contact/v3/users/find_by_department`.
 - Field `Direct manager` yang kosong di Lark membuat pengajuan langsung masuk antrian GA (by design, tapi perlu disiplin data HR).
+- Dashboard Security memakai zona waktu perangkat yang membukanya untuk menentukan "hari ini" — set zona waktu PC gerbang ke WIB (Asia/Jakarta).
+- `GET /api/bookings` mengambil seluruh booking (tanpa paginasi). Cukup untuk volume internal; bila data membesar, tambahkan filter rentang tanggal + partisi tabel pada `start_time`.
+- Cek bentrok booking best-effort (BigQuery bukan OLTP): dua pengajuan tumpang-tindih yang benar-benar bersamaan bisa lolos keduanya — tertangkap saat approval GA.

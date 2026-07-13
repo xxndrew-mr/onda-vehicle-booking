@@ -1,5 +1,6 @@
 import getBigQuery from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
+import { getUserByLarkId } from '../../../lib/users';
 
 const DATASET = 'onda_booking_db';
 
@@ -17,7 +18,14 @@ async function handler(req, res) {
 
   try {
     const bigquery = getBigQuery();
-    const me = req.user;
+
+    // Role terkini dari DB (bukan klaim JWT yang bisa basi) — konsisten dengan
+    // otorisasi aksi approval, sehingga user yang di-demote di Lark langsung
+    // kehilangan akses antrian GA.
+    const me = await getUserByLarkId(req.user.sub);
+    if (!me) {
+      return res.status(401).json({ message: 'Profil user tidak ditemukan. Silakan login ulang.' });
+    }
 
     const baseSelect = `
       SELECT b.*,
@@ -30,7 +38,7 @@ async function handler(req, res) {
       query: `${baseSelect}
         WHERE b.status = 'Pending Supervisor' AND b.supervisor_id = @me
         ORDER BY b.created_at`,
-      params: { me: me.sub },
+      params: { me: me.lark_user_id },
     });
 
     let gaQueue = [];
@@ -44,7 +52,7 @@ async function handler(req, res) {
     return res.status(200).json({ supervisorQueue, gaQueue, role: me.role });
   } catch (error) {
     console.error('API /api/bookings/pending error:', error);
-    return res.status(500).json({ message: 'Terjadi kesalahan pada server.', error: error.message });
+    return res.status(500).json({ message: 'Terjadi kesalahan pada server.' });
   }
 }
 

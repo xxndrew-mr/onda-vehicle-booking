@@ -22,7 +22,17 @@
       "Bash(grep -rhoE \"onda_booking_db|DATASET\\\\s*=\\\\s*['\\\\\"][^'\\\\\"]+\" \"/d/Documents/Andre/Work Project/car-booking-system-onda/pages\" 2>/dev/null | sort -u | head; ls \"/d/Documents/Andre/Work Project/car-booking-system-onda/pages/api\" 2>/dev/null)",
       "Read(//d/Documents/Andre/Work Project/car-booking-system-onda/**)",
       "Read(//d/Documents/Andre/Work Project/car-booking-system-onda/pages/**)",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "mcp__claude_ai_Google_Cloud_BigQuery__list_dataset_ids",
+      "mcp__claude_ai_Google_Cloud_BigQuery__execute_sql",
+      "mcp__claude_ai_Google_Cloud_BigQuery__list_table_ids",
+      "Bash(node -e \"const fs=require\\('fs'\\);const crypto=require\\('crypto'\\);const pem=fs.readFileSync\\('key.pem','utf8'\\);try{const k=crypto.createPrivateKey\\(pem\\);console.log\\('VALID KEY:',k.asymmetricKeyType,k.asymmetricKeyDetails||''\\);}catch\\(e\\){console.log\\('INVALID:',e.message,e.code||''\\);}\")",
+      "Bash(node \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Documents-Andre-Work-Project-car-booking-system\\\\72a4ea78-2e28-4bc1-8cbd-80aa50393c39\\\\scratchpad\\\\keytest.mjs\")",
+      "mcp__claude_ai_Google_Cloud_BigQuery__get_table_info",
+      "Bash(git --no-pager diff -- .env.example)",
+      "Bash(git --no-pager diff --stat)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(grep -B1 -A2 \"Parsing error\\\\|\\\\.js$\")"
     ]
   }
 }

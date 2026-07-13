@@ -17,7 +17,7 @@ async function handler(req, res) {
     return res.status(200).json(rows);
   } catch (error) {
     console.error('API /api/vehicles error:', error);
-    return res.status(500).json({ message: 'Terjadi kesalahan pada server.', error: error.message });
+    return res.status(500).json({ message: 'Terjadi kesalahan pada server.' });
   }
 }
 
