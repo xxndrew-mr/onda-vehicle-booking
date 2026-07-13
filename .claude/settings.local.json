@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npx kill-port *)",
+      "WebSearch",
+      "WebFetch(domain:open.larksuite.com)",
+      "Bash(node -e ' *)",
+      "Bash(grep -rhoE \"\\(GOOGLE_PROJECT_ID[\\\\\"']?\\\\s*[:=]\\\\s*[\\\\\"'][^\\\\\"']+|projectId[\\\\\"']?\\\\s*:\\\\s*[\\\\\"'][a-z][a-z0-9-]{4,28}[\\\\\"']\\)\" \"/d/Documents/Andre/Work Project/car-booking-system/.next\")",
+      "Bash(gcloud config *)",
+      "Read(//c/Users/user/AppData/Roaming/gcloud/**)",
+      "Read(//c/Users/user/AppData/Roaming/gcloud/configurations/**)",
+      "Bash(node \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Documents-Andre-Work-Project-car-booking-system\\\\72a4ea78-2e28-4bc1-8cbd-80aa50393c39\\\\scratchpad\\\\urltest.mjs\")",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(new URL\\('/\\\\\\\\\\\\\\\\evil.com', 'https://myapp.com/api/auth/callback'\\).href\\)\\); console.log\\('startsWith //:', '/\\\\\\\\\\\\\\\\evil.com'.startsWith\\('//'\\)\\); console.log\\('raw:', JSON.stringify\\('/\\\\\\\\\\\\\\\\evil.com'\\)\\);\")",
+      "Bash(grep -rhoE \"\\\\\"[a-z][a-z0-9]+-[a-z0-9-]+-[0-9]{4,6}\\\\\"\" \"/d/Documents/Andre/Work Project/car-booking-system/.next\")",
+      "Bash(node \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Documents-Andre-Work-Project-car-booking-system\\\\72a4ea78-2e28-4bc1-8cbd-80aa50393c39\\\\scratchpad\\\\urltest.js\")",
+      "Bash(perl -0777 -ne 'while \\(/\\(.{0,300}Pending M\\\\/GM.{0,300}\\)/gs\\) { print \"$1\\\\n---\\\\n\" }' '/d/Documents/Andre/Work Project/car-booking-system/.next/dev/server/chunks/ssr/[root-of-the-server]__745a78f5._.js')",
+      "Bash(ls -a \"/d/Documents/Andre/Work Project/\" 2>/dev/null; ls -a \"/d/Documents/Andre/Work Project/car-booking-system\" | head -40)",
+      "Read(//d/Documents/Andre/Work Project//**)",
+      "mcp__claude_ai_Google_Cloud_BigQuery__execute_sql_readonly",
+      "Bash(grep -rhoE \"onda_booking_db|DATASET\\\\s*=\\\\s*['\\\\\"][^'\\\\\"]+\" \"/d/Documents/Andre/Work Project/car-booking-system-onda/pages\" 2>/dev/null | sort -u | head; ls \"/d/Documents/Andre/Work Project/car-booking-system-onda/pages/api\" 2>/dev/null)",
+      "Read(//d/Documents/Andre/Work Project/car-booking-system-onda/**)",
+      "Read(//d/Documents/Andre/Work Project/car-booking-system-onda/pages/**)",
+      "Bash(python3 -)"
+    ]
+  }
+}
