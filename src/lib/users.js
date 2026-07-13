@@ -67,3 +67,17 @@ export async function getUserByLarkId(larkUserId) {
   });
   return rows[0] || null;
 }
+
+/**
+ * Apakah ada karyawan yang atasan langsungnya (leader_user_id di Lark) = user ini?
+ * Ini penanda paling akurat "user adalah supervisor" untuk keperluan approval —
+ * karena tahap supervisor dicocokkan ke supervisor_id = leader_user_id pemohon.
+ */
+export async function hasSubordinates(larkUserId) {
+  const bigquery = getBigQuery();
+  const [rows] = await bigquery.query({
+    query: `SELECT 1 FROM \`${DATASET}.users\` WHERE leader_user_id = @id LIMIT 1`,
+    params: { id: larkUserId },
+  });
+  return rows.length > 0;
+}

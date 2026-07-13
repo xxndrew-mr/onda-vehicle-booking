@@ -14,6 +14,7 @@ async function handler(req, res) {
       email: req.user.email,
       role: req.user.role,
       is_supervisor: req.user.is_supervisor,
+      department: req.user.department || '',
     },
   });
 }

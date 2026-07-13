@@ -3,12 +3,6 @@ import { useRouter } from 'next/router';
 import { Car, CalendarDays, ClipboardCheck, ShieldCheck, LogOut, User } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
-const links = [
-  { href: '/', label: 'Booking', icon: CalendarDays },
-  { href: '/approval', label: 'Approval', icon: ClipboardCheck },
-  { href: '/security', label: 'Security', icon: ShieldCheck },
-];
-
 const ROLE_LABELS = {
   ADMIN: 'Administrator',
   GA: 'General Affairs',
@@ -20,6 +14,17 @@ const ROLE_LABELS = {
 export default function Navbar() {
   const { pathname } = useRouter();
   const { user } = useAuth();
+
+  // Menu Approval hanya untuk yang benar-benar bisa menyetujui:
+  // supervisor (leader divisi di Lark / punya bawahan) atau GA/Admin.
+  const canApprove =
+    !!user && (user.is_supervisor || user.role === 'GA' || user.role === 'ADMIN');
+
+  const links = [
+    { href: '/', label: 'Booking', icon: CalendarDays, show: true },
+    { href: '/approval', label: 'Approval', icon: ClipboardCheck, show: canApprove },
+    { href: '/security', label: 'Security', icon: ShieldCheck, show: true },
+  ].filter((l) => l.show);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -55,7 +60,10 @@ export default function Navbar() {
               <User size={16} />
               <div className="text-sm leading-tight">
                 <div className="font-semibold">{user.name}</div>
-                <div className="text-xs text-blue-200">{ROLE_LABELS[user.role] || user.role}</div>
+                <div className="text-xs text-blue-200">
+                  {ROLE_LABELS[user.role] || user.role}
+                  {user.department ? ` · ${user.department}` : ''}
+                </div>
               </div>
               <button
                 onClick={handleLogout}

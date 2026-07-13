@@ -20,12 +20,17 @@ function getSecretKey() {
  * Payload sengaja kecil: identitas + role; data lengkap ada di tabel users.
  */
 export async function createSessionToken(user) {
+  const department = Array.isArray(user.department_names)
+    ? user.department_names.join(', ')
+    : user.department_names || '';
+
   return new SignJWT({
     sub: user.lark_user_id,
     name: user.name,
     email: user.email || '',
     role: user.role,
     is_supervisor: !!user.is_supervisor,
+    department,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

@@ -215,7 +215,7 @@ export default function Home() {
             <h2 className="text-lg font-bold text-blue-900 mb-1">Detail Booking</h2>
             <div className="text-sm text-gray-600 space-y-1 mb-4">
               <p><span className="font-medium">Kendaraan:</span> {detail.vehicle_name} {detail.license_plate ? `(${detail.license_plate})` : ''}</p>
-              <p><span className="font-medium">Pemohon:</span> {detail.user_name}</p>
+              <p><span className="font-medium">Pemohon:</span> {detail.user_name}{detail.requester_department ? ` — ${detail.requester_department}` : ''}</p>
               <p><span className="font-medium">Waktu:</span> {fmt(detail.start_time?.value)} &rarr; {fmt(detail.end_time?.value)}</p>
               <p><span className="font-medium">Keperluan:</span> {detail.purpose}</p>
               <p><span className="font-medium">Status:</span> {detail.status}</p>

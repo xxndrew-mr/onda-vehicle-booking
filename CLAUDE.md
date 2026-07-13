@@ -35,7 +35,7 @@ Next.js 16 **Pages Router** (jangan buat `src/app/` — konflik route). React 19
 - `src/lib/users.js` — MERGE (upsert DML) ke `users` setiap login = auto-provisioning + sinkronisasi.
 - `src/lib/roles.js` — `resolveRole()`: ADMIN (env email) > GA (nama departemen) > GM/MANAGER (job title / leader dept) > STAFF. Dihitung ulang tiap login; JANGAN tambahkan pengelolaan role manual.
 - API bookings: `index.js` (GET kalender, POST buat — supervisor di-assign dari `users.leader_user_id`), `pending.js` (antrian saya), `[id].js` (PATCH transisi).
-- Frontend: `AuthContext` (identitas via `/api/auth/me`), halaman di `src/pages/`.
+- Frontend: `AuthContext` (identitas via `/api/auth/me`), halaman di `src/pages/`. Navbar menampilkan menu Approval hanya bila `is_supervisor || GA || ADMIN`; `is_supervisor` = leader departemen Lark ATAU ada bawahan (`hasSubordinates`, dicek di `sso.js` saat login). Divisi pemohon disimpan di `bookings.requester_department` (snapshot saat buat) dan ditampilkan di approval/detail/security.
 
 ## Status State Machine (kontrak antar-komponen, jangan diubah sepihak)
 

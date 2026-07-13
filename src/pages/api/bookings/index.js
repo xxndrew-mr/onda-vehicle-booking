@@ -66,11 +66,11 @@ async function handler(req, res) {
       // risiko ini kecil dan bisa ditangkap manual saat approval.
       const insertQuery = `
         INSERT INTO \`${DATASET}.bookings\`
-          (id, vehicle_id, requester_id, user_name, user_level,
+          (id, vehicle_id, requester_id, user_name, user_level, requester_department,
            supervisor_id, supervisor_name,
            start_time, end_time, purpose, status, created_at)
         SELECT
-          @id, @vehicle_id, @requester_id, @user_name, @user_level,
+          @id, @vehicle_id, @requester_id, @user_name, @user_level, @requester_department,
           @supervisor_id, @supervisor_name,
           TIMESTAMP(@start_time), TIMESTAMP(@end_time), @purpose, @status, CURRENT_TIMESTAMP()
         FROM UNNEST([1]) AS _
@@ -89,6 +89,7 @@ async function handler(req, res) {
         requester_id: req.user.sub,
         user_name: req.user.name,
         user_level: requester.role || req.user.role,
+        requester_department: requester.department_names || '',
         supervisor_id: requester.leader_user_id || '',
         supervisor_name: requester.leader_name || '',
         start_time,

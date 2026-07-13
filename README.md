@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS onda_booking_db.bookings (
   requester_id         STRING,      -- open_id Lark pemohon
   user_name            STRING,      -- nama pemohon (display)
   user_level           STRING,      -- role pemohon saat mengajukan
+  requester_department STRING,      -- divisi/departemen pemohon (dari Lark)
   supervisor_id        STRING,      -- open_id supervisor (leader_user_id dari Lark)
   supervisor_name      STRING,
   start_time           TIMESTAMP,
@@ -146,6 +147,7 @@ INSERT INTO onda_booking_db.vehicles (id, name, license_plate) VALUES
 ```sql
 ALTER TABLE onda_booking_db.bookings
   ADD COLUMN IF NOT EXISTS requester_id STRING,
+  ADD COLUMN IF NOT EXISTS requester_department STRING,
   ADD COLUMN IF NOT EXISTS supervisor_id STRING,
   ADD COLUMN IF NOT EXISTS supervisor_name STRING,
   ADD COLUMN IF NOT EXISTS supervisor_action_by STRING,

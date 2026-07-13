@@ -13,6 +13,11 @@ function BookingCard({ item, onAction, stageInfo }) {
         </div>
         <div className="flex items-center gap-2 text-gray-600">
           <User size={16} /> {item.user_name}
+          {item.requester_department && (
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              {item.requester_department}
+            </span>
+          )}
         </div>
         {stageInfo && <p className="text-xs text-gray-400">{stageInfo}</p>}
         <p className="text-sm text-gray-500 italic">&ldquo;Keperluan: {item.purpose}&rdquo;</p>

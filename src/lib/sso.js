@@ -1,5 +1,5 @@
 import { fetchLarkProfile } from './lark';
-import { upsertUser } from './users';
+import { upsertUser, hasSubordinates } from './users';
 import { createSessionToken, setSessionCookie } from './auth';
 
 /**
@@ -9,6 +9,13 @@ import { createSessionToken, setSessionCookie } from './auth';
  */
 export async function loginWithCode(code, res) {
   const profile = await fetchLarkProfile(code);
+
+  // Supervisor = leader departemen di Lark ATAU ada karyawan yang melapor ke user
+  // ini (leader_user_id). Penanda ini menentukan akses menu Approval.
+  if (!profile.is_supervisor) {
+    profile.is_supervisor = await hasSubordinates(profile.lark_user_id);
+  }
+
   await upsertUser(profile);
   const token = await createSessionToken(profile);
   setSessionCookie(res, token);

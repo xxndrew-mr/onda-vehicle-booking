@@ -68,7 +68,7 @@ export default function SecurityDashboard() {
               </div>
               <h3 className="text-xl font-bold mb-2">{item.vehicle_name}</h3>
               <div className="space-y-2 text-sm text-slate-300">
-                <div className="flex items-center gap-2"><User size={14} /> Driver/User: {item.user_name}</div>
+                <div className="flex items-center gap-2"><User size={14} /> Driver/User: {item.user_name}{item.requester_department ? ` (${item.requester_department})` : ''}</div>
                 <div className="flex items-center gap-2"><Clock size={14} /> {fmt(item.start_time)} &rarr; {fmt(item.end_time)}</div>
                 <div className="flex items-center gap-2"><MapPin size={14} /> Tujuan: {item.purpose}</div>
               </div>
