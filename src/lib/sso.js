@@ -16,6 +16,11 @@ export async function loginWithCode(code, res) {
     profile.is_supervisor = await hasSubordinates(profile.lark_user_id);
   }
 
+  // Cetak identitas ke log server — memudahkan menemukan open_id untuk ADMIN_LARK_IDS.
+  console.log(
+    `[Lark login] ${profile.name} | open_id=${profile.lark_user_id} | role=${profile.role} | dept=${(profile.department_names || []).join(', ')}`
+  );
+
   await upsertUser(profile);
   const token = await createSessionToken(profile);
   setSessionCookie(res, token);

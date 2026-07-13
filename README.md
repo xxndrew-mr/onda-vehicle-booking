@@ -48,7 +48,7 @@ Keputusan desain penting:
 
 | Role | Sumber kebenaran di Lark | Dipakai untuk |
 |---|---|---|
-| ADMIN | Email ada di env `ADMIN_EMAILS` | Bisa memproses semua tahap approval |
+| ADMIN | open_id ada di env `ADMIN_LARK_IDS` (paling andal), atau email di `ADMIN_EMAILS` | Melihat & memproses **semua** tahap: supervisor divisi mana pun **dan** GA |
 | GA | Anggota departemen yang namanya cocok `GA_DEPARTMENT_NAMES` | Tahap approval final + konfirmasi kendaraan |
 | GM | `job_title` mengandung GM/General Manager/Direktur | Label tampilan |
 | MANAGER | Leader departemen di Lark, atau `job_title` Manager | Label tampilan |

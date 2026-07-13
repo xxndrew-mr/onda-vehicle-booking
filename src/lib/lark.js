@@ -189,6 +189,7 @@ export async function fetchLarkProfile(code) {
 
   const email = contact.enterprise_email || contact.email || info.email || '';
   const role = resolveRole({
+    larkUserId: info.open_id,
     emails: [contact.enterprise_email, contact.email, info.email].filter(Boolean),
     departmentNames,
     jobTitle: contact.job_title || '',

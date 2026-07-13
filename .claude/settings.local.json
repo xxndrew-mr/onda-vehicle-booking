@@ -32,7 +32,8 @@
       "Bash(git --no-pager diff -- .env.example)",
       "Bash(git --no-pager diff --stat)",
       "Bash(echo \"exit: $?\")",
-      "Bash(grep -B1 -A2 \"Parsing error\\\\|\\\\.js$\")"
+      "Bash(grep -B1 -A2 \"Parsing error\\\\|\\\\.js$\")",
+      "Bash(node --input-type=module -e ' *)"
     ]
   }
 }

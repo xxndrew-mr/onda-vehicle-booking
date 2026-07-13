@@ -34,22 +34,34 @@ async function handler(req, res) {
       FROM \`${DATASET}.bookings\` b
       LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id`;
 
-    const [supervisorQueue] = await bigquery.query({
-      query: `${baseSelect}
-        WHERE b.status = 'Pending Supervisor' AND b.supervisor_id = @me
-        ORDER BY b.created_at`,
-      params: { me: me.lark_user_id },
-    });
+    const isAdmin = me.role === 'ADMIN';
 
+    // supervisorQueue: ADMIN melihat SEMUA pengajuan tahap supervisor (boleh bertindak
+    // sebagai supervisor mana pun); user lain hanya yang dirinya jadi supervisor.
+    let supervisorQueue;
+    if (isAdmin) {
+      [supervisorQueue] = await bigquery.query(
+        `${baseSelect} WHERE b.status = 'Pending Supervisor' ORDER BY b.created_at`
+      );
+    } else {
+      [supervisorQueue] = await bigquery.query({
+        query: `${baseSelect}
+          WHERE b.status = 'Pending Supervisor' AND b.supervisor_id = @me
+          ORDER BY b.created_at`,
+        params: { me: me.lark_user_id },
+      });
+    }
+
+    // gaQueue: semua pengajuan tahap GA — untuk role GA dan ADMIN.
     let gaQueue = [];
-    if (me.role === 'GA' || me.role === 'ADMIN') {
+    if (me.role === 'GA' || isAdmin) {
       const [rows] = await bigquery.query(
         `${baseSelect} WHERE b.status = 'Pending GA' ORDER BY b.created_at`
       );
       gaQueue = rows;
     }
 
-    return res.status(200).json({ supervisorQueue, gaQueue, role: me.role });
+    return res.status(200).json({ supervisorQueue, gaQueue, role: me.role, isAdmin });
   } catch (error) {
     console.error('API /api/bookings/pending error:', error);
     return res.status(500).json({ message: 'Terjadi kesalahan pada server.' });

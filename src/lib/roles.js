@@ -4,7 +4,9 @@
  * perubahan struktur organisasi di Lark.
  *
  * Prioritas:
- *   1. ADMIN — email ada di env ADMIN_EMAILS (dipisah koma).
+ *   1. ADMIN — open_id ada di env ADMIN_LARK_IDS, ATAU email ada di ADMIN_EMAILS
+ *              (keduanya dipisah koma). ADMIN_LARK_IDS paling andal karena open_id
+ *              selalu tersedia tanpa perlu scope email.
  *   2. GA    — anggota departemen General Affairs (nama departemen cocok
  *              dengan env GA_DEPARTMENT_NAMES, default "General Affairs,GA").
  *   3. GM / MANAGER — dari job title dan/atau posisi sebagai leader
@@ -20,7 +22,16 @@ function csvEnv(name, fallback = '') {
     .filter(Boolean);
 }
 
-export function resolveRole({ emails = [], departmentNames = [], jobTitle = '', isDepartmentLeader = false }) {
+export function resolveRole({
+  larkUserId = '',
+  emails = [],
+  departmentNames = [],
+  jobTitle = '',
+  isDepartmentLeader = false,
+}) {
+  const adminIds = csvEnv('ADMIN_LARK_IDS');
+  if (larkUserId && adminIds.includes(larkUserId.toLowerCase())) return 'ADMIN';
+
   const adminEmails = csvEnv('ADMIN_EMAILS');
   if (emails.some((e) => e && adminEmails.includes(e.toLowerCase()))) return 'ADMIN';
 

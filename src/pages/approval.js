@@ -74,7 +74,8 @@ export default function Approvals() {
     }
   };
 
-  const isGa = queues.role === 'GA' || queues.role === 'ADMIN';
+  const isAdmin = queues.role === 'ADMIN';
+  const isGa = queues.role === 'GA' || isAdmin;
   const nothingToDo = queues.supervisorQueue.length === 0 && (!isGa || queues.gaQueue.length === 0);
 
   return (
@@ -94,13 +95,21 @@ export default function Approvals() {
           </div>
         )}
 
+        {isAdmin && (
+          <p className="mb-4 text-sm text-gray-500">
+            Anda login sebagai <span className="font-semibold">Administrator</span> — bisa memproses
+            semua tahap (supervisor mana pun & GA).
+          </p>
+        )}
+
         <section className="mb-8">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-700 mb-3">
-            <UserCheck size={20} /> Menunggu Persetujuan Saya (Supervisor)
+            <UserCheck size={20} />{' '}
+            {isAdmin ? 'Tahap Supervisor (semua divisi)' : 'Menunggu Persetujuan Saya (Supervisor)'}
           </h2>
           {queues.supervisorQueue.length === 0 ? (
             <div className="bg-white p-6 text-center text-gray-500 rounded-lg shadow-sm">
-              Tidak ada pengajuan dari anggota tim Anda.
+              {isAdmin ? 'Tidak ada pengajuan di tahap supervisor.' : 'Tidak ada pengajuan dari anggota tim Anda.'}
             </div>
           ) : (
             <div className="space-y-4">
@@ -109,7 +118,11 @@ export default function Approvals() {
                   key={item.id}
                   item={item}
                   onAction={handleAction}
-                  stageInfo="Anda adalah supervisor pemohon (dari struktur organisasi Lark)."
+                  stageInfo={
+                    isAdmin
+                      ? `Supervisor pemohon: ${item.supervisor_name || '—'}`
+                      : 'Anda adalah supervisor pemohon (dari struktur organisasi Lark).'
+                  }
                 />
               ))}
             </div>
