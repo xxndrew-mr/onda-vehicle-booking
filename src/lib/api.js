@@ -22,7 +22,9 @@ async function parseOrThrow(res) {
 }
 
 export async function getJson(url) {
-  return parseOrThrow(await fetch(url));
+  // no-store: selalu ambil data segar (cegah browser menampilkan respons GET lama
+  // setelah aksi seperti edit/approve).
+  return parseOrThrow(await fetch(url, { cache: 'no-store' }));
 }
 
 export async function sendJson(url, method, body) {

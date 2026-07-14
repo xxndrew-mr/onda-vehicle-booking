@@ -65,25 +65,30 @@ export default function Armada() {
       setToast({ message: 'Nama kendaraan wajib diisi.', type: 'error' });
       return;
     }
+    // Kirim SEMUA field yang dikelola (termasuk kapasitas, bahan bakar, catatan).
+    const payload = {
+      name: form.name.trim(),
+      license_plate: form.license_plate,
+      status: form.status,
+      capacity: form.capacity,
+      fuel_type: form.fuel_type,
+      notes: form.notes,
+    };
+
     setSaving(true);
     try {
       if (form.id) {
-        await sendJson(`/api/vehicles/${form.id}`, 'PATCH', {
-          name: form.name,
-          license_plate: form.license_plate,
-          status: form.status,
-        });
+        await sendJson(`/api/vehicles/${form.id}`, 'PATCH', payload);
+        // Optimistic: perbarui tampilan seketika.
+        setVehicles((list) => list.map((x) => (x.id === form.id ? { ...x, ...payload } : x)));
         setToast({ message: 'Kendaraan diperbarui.', type: 'success' });
+        setForm(null);
       } else {
-        await sendJson('/api/vehicles', 'POST', {
-          name: form.name,
-          license_plate: form.license_plate,
-          status: form.status,
-        });
+        await sendJson('/api/vehicles', 'POST', payload);
         setToast({ message: 'Kendaraan ditambahkan.', type: 'success' });
+        setForm(null);
+        fetchVehicles(); // butuh id dari server
       }
-      setForm(null);
-      fetchVehicles();
     } catch (e) {
       setToast({ message: e.message, type: 'error' });
     } finally {
