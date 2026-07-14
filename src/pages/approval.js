@@ -191,7 +191,7 @@ export default function Approvals() {
   const nothingToDo = queues.supervisorQueue.length === 0 && (!isGa || queues.gaQueue.length === 0);
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
+    <div className="p-6 sm:p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Persetujuan Booking</h1>
 

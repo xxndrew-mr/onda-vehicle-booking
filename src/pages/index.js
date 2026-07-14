@@ -113,10 +113,10 @@ export default function Home() {
     detail && user && detail.requester_id === user.id && ACTIVE_STATUSES.includes(detail.status);
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+    <div className="p-6 sm:p-8">
+      <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-100">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-blue-900">Workflow Booking Mobil - PT. Onda Mega Integra</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Booking Kendaraan</h1>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
             Kendaraan:

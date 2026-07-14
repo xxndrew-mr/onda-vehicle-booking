@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * scrollbar-gutter: stable → selalu sisakan ruang scrollbar, sehingga lebar
+ * konten tidak berubah antara halaman yang perlu scroll dan yang tidak.
+ * Ini mencegah navbar/konten ber-mx-auto "melompat" horizontal saat pindah page.
+ */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }

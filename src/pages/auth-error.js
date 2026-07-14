@@ -7,8 +7,8 @@ export default function AuthError() {
   const message = typeof query.message === 'string' ? query.message : 'Terjadi kesalahan saat login.';
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-8">
-      <div className="max-w-lg w-full bg-white rounded-xl shadow-lg p-8 text-center">
+    <div className="min-h-[70vh] flex items-center justify-center p-6 sm:p-8">
+      <div className="max-w-lg w-full bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-8 text-center">
         <ShieldAlert size={48} className="mx-auto text-red-500 mb-4" />
         <h1 className="text-xl font-bold text-gray-800 mb-2">Login Lark Gagal</h1>
         <p className="text-gray-600 mb-6 break-words">{message}</p>

@@ -6,8 +6,9 @@ import { AuthProvider } from '../components/AuthContext'
 function MyApp({ Component, pageProps }) {
   return (
     <AuthProvider>
-      <div className="flex flex-col min-h-screen bg-gray-100">
+      <div className="flex flex-col min-h-screen bg-gray-50 text-gray-900">
         <Navbar />
+        {/* Background & tinggi ditangani di sini; halaman cukup mengisi konten. */}
         <main className="flex-1">
           <Component {...pageProps} />
         </main>
