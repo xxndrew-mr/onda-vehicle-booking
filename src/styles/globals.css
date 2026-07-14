@@ -3,7 +3,6 @@
 /*
  * scrollbar-gutter: stable → selalu sisakan ruang scrollbar, sehingga lebar
  * konten tidak berubah antara halaman yang perlu scroll dan yang tidak.
- * Ini mencegah navbar/konten ber-mx-auto "melompat" horizontal saat pindah page.
  */
 html {
   scrollbar-gutter: stable;
@@ -11,4 +10,22 @@ html {
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Kontrol form konsisten: focus ring biru (warna dasar aplikasi). */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: #1d4ed8; /* blue-700 */
+  box-shadow: 0 0 0 3px rgb(29 78 216 / 0.15);
+}
+
+button:not(:disabled) {
+  cursor: pointer;
 }

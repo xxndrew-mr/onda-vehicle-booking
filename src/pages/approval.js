@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, X, Car, UserCheck, Building2, AlertTriangle } from 'lucide-react';
+import { Check, X, Car, UserCheck, Building2, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { isVehicleAvailable, VEHICLE_STATUS_META } from '../lib/vehicleStatus';
 import Avatar from '../components/Avatar';
 import Person from '../components/Person';
 import Toast from '../components/Toast';
 import Pagination, { usePagination } from '../components/Pagination';
+import PageHeader from '../components/PageHeader';
 
 const fmt = (t) => (t?.value ? new Date(t.value).toLocaleString('id-ID') : '-');
 
@@ -26,7 +27,7 @@ function RequesterLine({ item }) {
 // Kartu tahap supervisor (Approve/Reject sederhana).
 function SupervisorCard({ item, onAction, stageInfo }) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md flex justify-between items-center">
+    <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-100 hover:shadow-md transition-shadow flex justify-between items-center">
       <div className="space-y-1">
         <div className="flex items-center gap-2 font-semibold text-lg text-blue-700">
           <Car size={20} /> {item.vehicle_name} ({item.license_plate})
@@ -76,7 +77,7 @@ function GaCard({ item, onAction, stageInfo, availableVehicles }) {
   const statusMeta = VEHICLE_STATUS_META[item.vehicle_status] || null;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-100 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 font-semibold text-lg text-blue-700">
@@ -211,7 +212,11 @@ export default function Approvals() {
   return (
     <div className="p-6 sm:p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Persetujuan Booking</h1>
+        <PageHeader
+          icon={ClipboardCheck}
+          title="Persetujuan Booking"
+          subtitle="Tinjau dan proses pengajuan booking kendaraan."
+        />
 
         <Toast
           message={toast.message}

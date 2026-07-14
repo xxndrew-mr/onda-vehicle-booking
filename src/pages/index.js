@@ -7,8 +7,10 @@ import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
 import { StatusBadge, AuditLine, vehicleChangeNote, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
 import { isVehicleAvailable, vehicleSpecText } from '../lib/vehicleStatus';
+import { CalendarDays } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import Toast from '../components/Toast';
+import PageHeader from '../components/PageHeader';
 
 // Kalender hanya menampilkan booking AKTIF (Pending/Approved). Rejected & Cancelled
 // disembunyikan dari kalender (slot bebas) — record tetap ada di Riwayat user.
@@ -133,13 +135,15 @@ export default function Home() {
   return (
     <div className="p-6 sm:p-8">
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-100">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Booking Kendaraan</h1>
-        {user && (
-          <p className="mb-4 text-sm text-gray-500">
-            Pilih rentang waktu di kalender (tampilan Minggu/Hari), lalu pilih kendaraan yang tersedia.
-            Booking dibuat atas nama <span className="font-semibold">{user.name}</span>.
-          </p>
-        )}
+        <PageHeader
+          icon={CalendarDays}
+          title="Booking Kendaraan"
+          subtitle={
+            user
+              ? `Pilih rentang waktu di kalender, lalu pilih kendaraan tersedia — atas nama ${user.name}.`
+              : 'Pilih rentang waktu di kalender, lalu pilih kendaraan yang tersedia.'
+          }
+        />
 
         <Toast
           message={toast.message}

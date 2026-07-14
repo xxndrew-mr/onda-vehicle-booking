@@ -4,6 +4,7 @@ import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
 import Toast from '../components/Toast';
 import Pagination, { usePagination } from '../components/Pagination';
+import PageHeader from '../components/PageHeader';
 import { VEHICLE_STATUSES, VEHICLE_STATUS_META, vehicleSpecText } from '../lib/vehicleStatus';
 
 function StatusBadge({ status }) {
@@ -116,17 +117,19 @@ export default function Armada() {
   return (
     <div className="p-6 sm:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-800">
-            <Truck size={24} /> Manajemen Armada
-          </h1>
-          <button
-            onClick={() => { setForm({ ...emptyForm }); setErrorMsg(''); }}
-            className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition"
-          >
-            <Plus size={18} /> Tambah Kendaraan
-          </button>
-        </div>
+        <PageHeader
+          icon={Truck}
+          title="Manajemen Armada"
+          subtitle="Kelola kendaraan, status, dan informasinya."
+          right={
+            <button
+              onClick={() => { setForm({ ...emptyForm }); setErrorMsg(''); }}
+              className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition shadow-sm"
+            >
+              <Plus size={18} /> Tambah Kendaraan
+            </button>
+          }
+        />
 
         <Toast
           message={toast.message}
@@ -140,7 +143,7 @@ export default function Armada() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
+        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-6 overflow-x-auto">
           {vehicles.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-8">Belum ada kendaraan.</p>
           ) : (
@@ -157,7 +160,7 @@ export default function Armada() {
               </thead>
               <tbody>
                 {veh.pageItems.map((v) => (
-                  <tr key={v.id} className="border-b last:border-0 align-top">
+                  <tr key={v.id} className="border-b last:border-0 align-top hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 pr-4">
                       <div className="font-medium text-gray-800">{v.name}</div>
                       {v.notes && <div className="text-xs text-gray-400 max-w-[14rem] truncate" title={v.notes}>{v.notes}</div>}

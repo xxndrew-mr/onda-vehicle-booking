@@ -6,6 +6,7 @@ import Avatar from '../components/Avatar';
 import Person from '../components/Person';
 import Toast from '../components/Toast';
 import Pagination, { usePagination } from '../components/Pagination';
+import PageHeader from '../components/PageHeader';
 
 /**
  * Aksi yang tercatat pada sebuah booking (untuk tab Riwayat Persetujuan).
@@ -121,7 +122,7 @@ export default function Riwayat() {
   return (
     <div className="p-6 sm:p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Riwayat</h1>
+        <PageHeader icon={History} title="Riwayat" subtitle="Riwayat booking Anda dan persetujuan." />
 
         <div className="flex gap-1 border-b border-gray-200 mb-6">
           {tabBtn('mine', 'Booking Saya', History)}
@@ -141,7 +142,7 @@ export default function Riwayat() {
         )}
 
         {tab === 'mine' && (
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-6">
             <SearchBox
               value={mineSearch}
               onChange={(e) => { setMineSearch(e.target.value); minePage.setPage(1); }}
@@ -168,7 +169,7 @@ export default function Riwayat() {
                   </thead>
                   <tbody>
                     {minePage.pageItems.map((b) => (
-                      <tr key={b.id} className="border-b last:border-0 align-top">
+                      <tr key={b.id} className="border-b last:border-0 align-top hover:bg-gray-50/70 transition-colors">
                         <td className="py-3 pr-4">
                           <div className="font-medium text-gray-800">{b.vehicle_name}</div>
                           {b.license_plate && (
@@ -213,7 +214,7 @@ export default function Riwayat() {
         )}
 
         {tab === 'processed' && data.canApprove && (
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-6">
             {data.isAdmin && (
               <p className="text-xs text-gray-400 mb-4">
                 Anda Administrator — menampilkan seluruh riwayat persetujuan (semua approver).
@@ -245,7 +246,7 @@ export default function Riwayat() {
                   </thead>
                   <tbody>
                     {procPage.pageItems.map((b) => (
-                      <tr key={b.id} className="border-b last:border-0 align-top">
+                      <tr key={b.id} className="border-b last:border-0 align-top hover:bg-gray-50/70 transition-colors">
                         <td className="py-3 pr-4">
                           <div className="font-medium text-gray-800">{b.vehicle_name}</div>
                           {b.license_plate && (
