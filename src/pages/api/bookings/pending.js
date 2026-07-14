@@ -52,7 +52,13 @@ async function handler(req, res) {
 
     const [[supervisorQueue], [gaQueue]] = await Promise.all([supervisorPromise, gaPromise]);
 
-    return res.status(200).json({ supervisorQueue, gaQueue, role: me.role, isAdmin });
+    return res.status(200).json({
+      supervisorQueue,
+      gaQueue,
+      role: me.role,
+      isAdmin,
+      is_supervisor: !!me.is_supervisor,
+    });
   } catch (error) {
     console.error('API /api/bookings/pending error:', error);
     return res.status(500).json({ message: 'Terjadi kesalahan pada server.' });

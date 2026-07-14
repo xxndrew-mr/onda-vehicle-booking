@@ -197,7 +197,12 @@ export default function Approvals() {
 
   const isAdmin = queues.role === 'ADMIN';
   const isGa = queues.role === 'GA' || isAdmin;
-  const nothingToDo = queues.supervisorQueue.length === 0 && (!isGa || queues.gaQueue.length === 0);
+  // Seksi supervisor hanya untuk supervisor (leader di Lark) / admin / bila ada antrian.
+  // Untuk GA murni (bukan supervisor), seksi ini disembunyikan.
+  const showSupervisor = isAdmin || !!queues.is_supervisor || queues.supervisorQueue.length > 0;
+  const nothingToDo =
+    (!showSupervisor || queues.supervisorQueue.length === 0) &&
+    (!isGa || queues.gaQueue.length === 0);
 
   return (
     <div className="p-6 sm:p-8">
@@ -223,6 +228,7 @@ export default function Approvals() {
           </p>
         )}
 
+        {showSupervisor && (
         <section className="mb-8">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-700 mb-3">
             <UserCheck size={20} />{' '}
@@ -258,6 +264,7 @@ export default function Approvals() {
             </div>
           )}
         </section>
+        )}
 
         {isGa && (
           <section>
