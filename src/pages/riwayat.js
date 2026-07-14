@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { History, ClipboardCheck, Check, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { History, ClipboardCheck, Check, X, Search } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { StatusBadge, AuditLine, vehicleChangeNote, actorName, actorId, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
 import Avatar from '../components/Avatar';
@@ -35,13 +35,47 @@ function recordedActions(b) {
   return acts;
 }
 
+function SearchBox({ value, onChange, placeholder }) {
+  return (
+    <div className="relative mb-4 max-w-sm">
+      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <input
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full border rounded-md pl-9 pr-3 py-2 text-sm"
+      />
+    </div>
+  );
+}
+
+// Cari lintas field teks (kendaraan, plat, pemohon, divisi, keperluan, status).
+function matchesQuery(b, q) {
+  const s = q.trim().toLowerCase();
+  if (!s) return true;
+  return [b.vehicle_name, b.license_plate, b.user_name, b.requester_department, b.purpose, b.status]
+    .some((f) => String(f || '').toLowerCase().includes(s));
+}
+
 export default function Riwayat() {
   const [data, setData] = useState({ mine: [], processed: [], canApprove: false, isAdmin: false });
   const [tab, setTab] = useState('mine');
   const [errorMsg, setErrorMsg] = useState('');
   const [toast, setToast] = useState({ message: '', type: 'success' });
-  const minePage = usePagination(data.mine, 10);
-  const procPage = usePagination(data.processed, 10);
+  const [mineSearch, setMineSearch] = useState('');
+  const [procSearch, setProcSearch] = useState('');
+
+  const filteredMine = useMemo(
+    () => data.mine.filter((b) => matchesQuery(b, mineSearch)),
+    [data.mine, mineSearch]
+  );
+  const filteredProc = useMemo(
+    () => data.processed.filter((b) => matchesQuery(b, procSearch)),
+    [data.processed, procSearch]
+  );
+
+  const minePage = usePagination(filteredMine, 10);
+  const procPage = usePagination(filteredProc, 10);
 
   const fetchHistory = useCallback(() => {
     getJson('/api/bookings/history')
@@ -108,9 +142,16 @@ export default function Riwayat() {
 
         {tab === 'mine' && (
           <div className="bg-white rounded-xl shadow p-6">
-            {data.mine.length === 0 ? (
+            <SearchBox
+              value={mineSearch}
+              onChange={(e) => { setMineSearch(e.target.value); minePage.setPage(1); }}
+              placeholder="Cari kendaraan, keperluan, status…"
+            />
+            {filteredMine.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-8">
-                Belum ada booking. Ajukan lewat kalender di halaman Booking.
+                {data.mine.length === 0
+                  ? 'Belum ada booking. Ajukan lewat kalender di halaman Booking.'
+                  : 'Tidak ada hasil untuk pencarian ini.'}
               </p>
             ) : (
               <div className="overflow-x-auto">
@@ -178,9 +219,16 @@ export default function Riwayat() {
                 Anda Administrator — menampilkan seluruh riwayat persetujuan (semua approver).
               </p>
             )}
-            {data.processed.length === 0 ? (
+            <SearchBox
+              value={procSearch}
+              onChange={(e) => { setProcSearch(e.target.value); procPage.setPage(1); }}
+              placeholder="Cari pemohon, divisi, kendaraan, keperluan…"
+            />
+            {filteredProc.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-8">
-                Belum ada booking yang Anda proses.
+                {data.processed.length === 0
+                  ? 'Belum ada booking yang Anda proses.'
+                  : 'Tidak ada hasil untuk pencarian ini.'}
               </p>
             ) : (
               <div className="overflow-x-auto">
