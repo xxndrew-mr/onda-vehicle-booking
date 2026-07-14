@@ -42,6 +42,7 @@ export async function proxy(request) {
 }
 
 export const config = {
-  // Semua route KECUALI: alur auth itu sendiri, halaman error auth, dan aset statis.
-  matcher: ['/((?!api/auth/|auth-error|_next/static|_next/image|favicon.ico|.*\\.svg$).*)'],
+  // Semua route KECUALI: alur auth itu sendiri, halaman error auth, dan aset statis
+  // (termasuk gambar public seperti logo — jangan dilewatkan gerbang auth).
+  matcher: ['/((?!api/auth/|auth-error|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
 };

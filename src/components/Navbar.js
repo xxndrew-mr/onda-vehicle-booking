@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Car, CalendarDays, ClipboardCheck, Truck, History, RotateCcw } from 'lucide-react';
+import { CalendarDays, ClipboardCheck, Truck, History, RotateCcw } from 'lucide-react';
 // ShieldCheck (menu Security) dinonaktifkan sementara — lihat link di bawah.
 import { useAuth } from './AuthContext';
 import Avatar from './Avatar';
@@ -54,12 +54,13 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
       <nav className="max-w-6xl mx-auto nav-surface backdrop-blur-md ring-1 ring-white/10 rounded-[var(--radius)] shadow-[0_18px_44px_-24px_rgba(14,34,150,0.65)]">
         <div className="px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
-          {/* Brand */}
+          {/* Brand — logo di chip putih agar kontras di atas navbar biru */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <span className="grid place-items-center w-9 h-9 rounded-xl bg-white/15 text-white">
-              <Car size={18} />
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-white p-1 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-login.png" alt="Logo PT Onda Mega Integra" className="w-full h-full object-contain" />
             </span>
-            <span className="hidden lg:block font-display text-[18px] text-white leading-none">Car Booking</span>
+            <span className="hidden lg:block font-display text-[17px] text-white leading-none">PT Onda Mega Integra</span>
           </Link>
 
           {/* Menu — label lebih besar & jelas (dibaca lintas usia) */}
