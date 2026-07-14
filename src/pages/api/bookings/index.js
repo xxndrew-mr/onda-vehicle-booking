@@ -3,6 +3,7 @@ import getBigQuery, { runDml } from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
 import { getUserByLarkId } from '../../../lib/users';
 import { isVehicleAvailable } from '../../../lib/vehicleStatus';
+import { notifyBookingCreated } from '../../../lib/notify';
 
 const DATASET = 'onda_booking_db';
 
@@ -54,7 +55,7 @@ async function handler(req, res) {
       // Cek status kendaraan + profil pemohon PARALEL (dua query independen).
       const [vehicleResult, requester] = await Promise.all([
         bigquery.query({
-          query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+          query: `SELECT status, name FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
           params: { vId: vehicle_id },
         }),
         getUserByLarkId(req.user.sub),
@@ -119,6 +120,23 @@ async function handler(req, res) {
 
       if (affected === 0) {
         return res.status(409).json({ message: 'Mobil sudah dipesan pada jam tersebut.' });
+      }
+
+      // Notifikasi bot Lark ke approver (best-effort, tidak boleh menggagalkan booking).
+      try {
+        await notifyBookingCreated({
+          status: initialStatus,
+          supervisor_id: requester.leader_user_id || '',
+          requester_id: req.user.sub,
+          user_name: req.user.name,
+          requester_department: requester.department_names || '',
+          vehicle_name: vrows[0].name || 'Kendaraan',
+          start_time,
+          end_time,
+          purpose,
+        });
+      } catch (e) {
+        console.error('[notify] booking baru:', e.message);
       }
 
       return res.status(201).json({ message: 'Booking berhasil diajukan', status: initialStatus });

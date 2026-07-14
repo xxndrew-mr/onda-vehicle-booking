@@ -2,6 +2,7 @@ import getBigQuery, { runDml } from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
 import { getUserByLarkId } from '../../../lib/users';
 import { isVehicleAvailable } from '../../../lib/vehicleStatus';
+import { notifyTransition } from '../../../lib/notify';
 
 const DATASET = 'onda_booking_db';
 
@@ -39,8 +40,12 @@ async function handler(req, res) {
     const [me, bookingResult] = await Promise.all([
       getUserByLarkId(req.user.sub),
       bigquery.query({
-        query: `SELECT status, supervisor_id, requester_id, vehicle_id, start_time, end_time
-                FROM \`${DATASET}.bookings\` WHERE id = @id`,
+        query: `SELECT b.status, b.supervisor_id, b.requester_id, b.vehicle_id,
+                       b.start_time, b.end_time, b.user_name, b.requester_department,
+                       COALESCE(v.name, 'Kendaraan') AS vehicle_name
+                FROM \`${DATASET}.bookings\` b
+                LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id
+                WHERE b.id = @id`,
         params: { id },
       }),
     ]);
@@ -101,7 +106,7 @@ async function handler(req, res) {
             params: { vId: booking.vehicle_id },
           }),
           bigquery.query({
-            query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+            query: `SELECT status, name FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
             params: { vId: new_vehicle_id },
           }),
           bigquery.query({
@@ -160,6 +165,12 @@ async function handler(req, res) {
         if (affected === 0) {
           return res.status(409).json({ message: 'Booking baru saja diproses orang lain. Muat ulang halaman.' });
         }
+        // Notif ke pemohon: disetujui dengan kendaraan pengganti.
+        try {
+          await notifyTransition({ ...booking, vehicle_name: nv[0].name || booking.vehicle_name }, 'Approved');
+        } catch (e) {
+          console.error('[notify] approve+swap:', e.message);
+        }
         return res.status(200).json({ message: 'Disetujui dengan pergantian kendaraan.' });
       }
       // APPROVE GA tanpa pergantian → jatuh ke alur generik di bawah.
@@ -201,6 +212,13 @@ async function handler(req, res) {
 
     if (affected === 0) {
       return res.status(409).json({ message: 'Booking baru saja diproses orang lain. Muat ulang halaman.' });
+    }
+
+    // Notifikasi bot: tahap berikutnya (GA) atau hasil akhir ke pemohon.
+    try {
+      await notifyTransition(booking, nextStatus);
+    } catch (e) {
+      console.error('[notify] transisi:', e.message);
     }
 
     return res.status(200).json({ message: `Status diperbarui menjadi: ${nextStatus}` });

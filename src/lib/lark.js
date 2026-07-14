@@ -90,6 +90,35 @@ export async function getTenantAccessToken() {
   return tenantTokenCache.token;
 }
 
+// ---------- Notifikasi pesan bot (IM) ----------
+
+/**
+ * Kirim pesan teks dari bot aplikasi ke seorang user (by open_id) memakai
+ * tenant_access_token. Prasyarat di Developer Console: kapabilitas "Bot" aktif,
+ * scope `im:message:send_as_bot`, dan visible range app mencakup penerima.
+ */
+export async function sendLarkMessage(openId, text) {
+  if (!openId || !text) return null;
+  const tenantToken = await getTenantAccessToken();
+  const res = await fetch(`${openBase()}/open-apis/im/v1/messages?receive_id_type=open_id`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${tenantToken}`,
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: JSON.stringify({
+      receive_id: openId,
+      msg_type: 'text',
+      content: JSON.stringify({ text }), // content WAJIB string JSON ter-escape
+    }),
+  });
+  const body = await res.json().catch(() => null);
+  if (!body || body.code !== 0) {
+    throw new Error(`Lark IM gagal: [${body?.code}] ${body?.msg || 'respons tidak valid'}`);
+  }
+  return body.data;
+}
+
 // ---------- OAuth: tukar authorization code → user_access_token ----------
 
 export async function exchangeCodeForUserToken(code) {

@@ -290,9 +290,23 @@ src/
 - Otorisasi approval dicek server-side per tahap dengan role terkini dari DB; transisi status memakai precondition (`WHERE status = @expected`) sehingga bebas race double-approve. Cek bentrok saat buat booking bersifat best-effort (BigQuery bukan OLTP) — cukup untuk pemakaian internal, dengan gerbang approval GA sebagai lapis kedua.
 - `App Secret`, private key GCP, dan token Lark tidak pernah menyentuh frontend.
 
+## Notifikasi Bot Lark
+
+Tiap ada approval baru, aplikasi mengirim **pesan bot Lark** (masuk ke aplikasi Lark karyawan) via `im/v1/messages` (`src/lib/notify.js`):
+- Booking baru → supervisor pemohon (atau tim GA bila tanpa supervisor).
+- Supervisor menyetujui → tim GA.
+- GA menyetujui/menolak, atau supervisor menolak → pemohon.
+
+**Setup di Lark Developer Console (wajib agar notifikasi jalan):**
+1. **Application capabilities → Add → Bot** (aktifkan kapabilitas Bot).
+2. **Permissions & Scopes** → grant `im:message:send_as_bot`.
+3. **Availability / Visible range** app mencakup semua karyawan penerima.
+4. **Create Version → Release** (rilis versi baru).
+
+Notifikasi bersifat *best-effort*: bila setup belum lengkap, notifikasi gagal diam-diam (tercatat di log) tanpa mengganggu alur booking/approval. Tidak perlu Lark Mail dan tidak ada env tambahan (memakai tenant token + `APP_BASE_URL`).
+
 ## Keterbatasan & Langkah Lanjutan
 
-- Notifikasi Lark (kirim pesan bot ke supervisor saat ada pengajuan, ke pemohon saat disetujui) belum ada — kandidat berikutnya via `im:message` API.
 - Data user disinkron saat login; jika butuh sinkronisasi berkala massal, tambahkan cron yang menelusuri `contact/v3/users/find_by_department`.
 - Field `Direct manager` yang kosong di Lark membuat pengajuan langsung masuk antrian GA (by design, tapi perlu disiplin data HR).
 - Dashboard Security memakai zona waktu perangkat yang membukanya untuk menentukan "hari ini" — set zona waktu PC gerbang ke WIB (Asia/Jakarta).
