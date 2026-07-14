@@ -25,9 +25,10 @@ async function handler(req, res) {
     const bigquery = getBigQuery();
 
     if (req.method === 'GET') {
-      // Daftar kendaraan + status (semua user login; halaman booking memfilter yang Ready).
+      // Daftar kendaraan + info (semua user login; halaman booking memfilter yang Ready).
       const [rows] = await bigquery.query(
-        `SELECT id, name, license_plate, status FROM \`${DATASET}.vehicles\` ORDER BY name`
+        `SELECT id, name, license_plate, status, capacity, fuel_type, notes
+         FROM \`${DATASET}.vehicles\` ORDER BY name`
       );
       return res.status(200).json(rows);
     }
@@ -36,7 +37,7 @@ async function handler(req, res) {
       const me = await requireGa(req, res);
       if (!me) return;
 
-      const { name, license_plate, status } = req.body || {};
+      const { name, license_plate, status, capacity, fuel_type, notes } = req.body || {};
       if (!name || !String(name).trim()) {
         return res.status(400).json({ message: 'Nama kendaraan wajib diisi.' });
       }
@@ -46,13 +47,17 @@ async function handler(req, res) {
       }
 
       await runDml(
-        `INSERT INTO \`${DATASET}.vehicles\` (id, name, license_plate, status)
-         VALUES (@id, @name, @license_plate, @status)`,
+        `INSERT INTO \`${DATASET}.vehicles\`
+           (id, name, license_plate, status, capacity, fuel_type, notes)
+         VALUES (@id, @name, @license_plate, @status, @capacity, @fuel_type, @notes)`,
         {
           id: uuidv4(),
           name: String(name).trim(),
           license_plate: (license_plate || '').trim(),
           status: vStatus,
+          capacity: (capacity ?? '').toString().trim(),
+          fuel_type: (fuel_type || '').trim(),
+          notes: (notes || '').trim(),
         }
       );
 

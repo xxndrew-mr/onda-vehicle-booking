@@ -6,7 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
 import { StatusBadge, AuditLine, vehicleChangeNote, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
-import { isVehicleAvailable } from '../lib/vehicleStatus';
+import { isVehicleAvailable, vehicleSpecText } from '../lib/vehicleStatus';
 import Avatar from '../components/Avatar';
 import Toast from '../components/Toast';
 
@@ -128,6 +128,7 @@ export default function Home() {
     detail && user && detail.requester_id === user.id && ACTIVE_STATUSES.includes(detail.status);
 
   const slotVehicles = draft ? vehiclesFreeForSlot(draft.start, draft.end) : [];
+  const selectedVehicle = slotVehicles.find((v) => v.id === modalVehicleId) || null;
 
   return (
     <div className="p-6 sm:p-8">
@@ -185,7 +186,7 @@ export default function Home() {
               </div>
             ) : (
               <select
-                className="w-full border rounded-md p-2 mb-4 text-sm"
+                className="w-full border rounded-md p-2 mb-2 text-sm"
                 value={modalVehicleId}
                 onChange={(e) => setModalVehicleId(e.target.value)}
                 autoFocus
@@ -196,6 +197,20 @@ export default function Home() {
                   </option>
                 ))}
               </select>
+            )}
+
+            {selectedVehicle && (
+              <div className="mb-4 rounded-md bg-blue-50 border border-blue-100 p-3 text-sm">
+                {vehicleSpecText(selectedVehicle) && (
+                  <p className="text-blue-900 font-medium">{vehicleSpecText(selectedVehicle)}</p>
+                )}
+                {selectedVehicle.notes && (
+                  <p className="text-gray-600 text-xs mt-1">Catatan: {selectedVehicle.notes}</p>
+                )}
+                {!vehicleSpecText(selectedVehicle) && !selectedVehicle.notes && (
+                  <p className="text-gray-400 text-xs">Belum ada info tambahan untuk kendaraan ini.</p>
+                )}
+              </div>
             )}
 
             <label className="block text-sm font-medium text-gray-700 mb-1">Keperluan</label>

@@ -97,7 +97,10 @@ CREATE TABLE IF NOT EXISTS onda_booking_db.vehicles (
   id            STRING NOT NULL,
   name          STRING NOT NULL,
   license_plate STRING,
-  status        STRING           -- Ready | In Use | Maintenance | Unavailable (hanya 'Ready' yang bisa dipesan)
+  status        STRING,          -- Ready | In Use | Maintenance | Unavailable (hanya 'Ready' yang bisa dipesan)
+  capacity      STRING,          -- kapasitas orang (mis. "7")
+  fuel_type     STRING,          -- bahan bakar (mis. "Bensin")
+  notes         STRING           -- catatan bebas tentang kendaraan
 );
 
 CREATE TABLE IF NOT EXISTS onda_booking_db.bookings (
@@ -168,7 +171,11 @@ ALTER TABLE onda_booking_db.bookings
   ADD COLUMN IF NOT EXISTS vehicle_change_at TIMESTAMP;
 
 -- Manajemen armada:
-ALTER TABLE onda_booking_db.vehicles ADD COLUMN IF NOT EXISTS status STRING;
+ALTER TABLE onda_booking_db.vehicles
+  ADD COLUMN IF NOT EXISTS status STRING,
+  ADD COLUMN IF NOT EXISTS capacity STRING,
+  ADD COLUMN IF NOT EXISTS fuel_type STRING,
+  ADD COLUMN IF NOT EXISTS notes STRING;
 UPDATE onda_booking_db.vehicles SET status = 'Ready' WHERE status IS NULL OR status = '';
 
 -- Petakan status lama ke skema baru (kalau tidak, booking lama tersangkut di

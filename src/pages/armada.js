@@ -3,7 +3,7 @@ import { Truck, Plus, Pencil } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
 import Toast from '../components/Toast';
-import { VEHICLE_STATUSES, VEHICLE_STATUS_META } from '../lib/vehicleStatus';
+import { VEHICLE_STATUSES, VEHICLE_STATUS_META, vehicleSpecText } from '../lib/vehicleStatus';
 
 function StatusBadge({ status }) {
   const meta = VEHICLE_STATUS_META[status] || { label: status || '-', cls: 'bg-gray-100 text-gray-600' };
@@ -14,7 +14,15 @@ function StatusBadge({ status }) {
   );
 }
 
-const emptyForm = { id: null, name: '', license_plate: '', status: 'Ready' };
+const emptyForm = {
+  id: null,
+  name: '',
+  license_plate: '',
+  status: 'Ready',
+  capacity: '',
+  fuel_type: '',
+  notes: '',
+};
 
 export default function Armada() {
   const { user, loading } = useAuth();
@@ -134,6 +142,7 @@ export default function Armada() {
                 <tr className="text-left text-gray-500 border-b">
                   <th className="py-2 pr-4 font-medium">Nama</th>
                   <th className="py-2 pr-4 font-medium">Plat Nomor</th>
+                  <th className="py-2 pr-4 font-medium">Info</th>
                   <th className="py-2 pr-4 font-medium">Status</th>
                   <th className="py-2 pr-4 font-medium">Ubah Status</th>
                   <th className="py-2 font-medium text-right">Aksi</th>
@@ -141,9 +150,13 @@ export default function Armada() {
               </thead>
               <tbody>
                 {vehicles.map((v) => (
-                  <tr key={v.id} className="border-b last:border-0">
-                    <td className="py-3 pr-4 font-medium text-gray-800">{v.name}</td>
+                  <tr key={v.id} className="border-b last:border-0 align-top">
+                    <td className="py-3 pr-4">
+                      <div className="font-medium text-gray-800">{v.name}</div>
+                      {v.notes && <div className="text-xs text-gray-400 max-w-[14rem] truncate" title={v.notes}>{v.notes}</div>}
+                    </td>
                     <td className="py-3 pr-4 text-gray-600">{v.license_plate || '—'}</td>
+                    <td className="py-3 pr-4 text-gray-600">{vehicleSpecText(v) || '—'}</td>
                     <td className="py-3 pr-4"><StatusBadge status={v.status} /></td>
                     <td className="py-3 pr-4">
                       <select
@@ -200,9 +213,32 @@ export default function Armada() {
               placeholder="Contoh: B 1234 OMI"
             />
 
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kapasitas (orang)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full border rounded-md p-2 mb-3 text-sm"
+                  value={form.capacity}
+                  onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+                  placeholder="Contoh: 6"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bahan Bakar</label>
+                <input
+                  className="w-full border rounded-md p-2 mb-3 text-sm"
+                  value={form.fuel_type}
+                  onChange={(e) => setForm({ ...form, fuel_type: e.target.value })}
+                  placeholder="Bensin / Solar / Listrik"
+                />
+              </div>
+            </div>
+
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
-              className="w-full border rounded-md p-2 mb-4 text-sm"
+              className="w-full border rounded-md p-2 mb-3 text-sm"
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
             >
@@ -210,6 +246,15 @@ export default function Armada() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
+
+            <label className="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+            <textarea
+              className="w-full border rounded-md p-2 mb-4 text-sm"
+              rows={2}
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="Contoh: AC dingin, cocok untuk perjalanan jauh"
+            />
 
             <div className="flex justify-end gap-2">
               <button

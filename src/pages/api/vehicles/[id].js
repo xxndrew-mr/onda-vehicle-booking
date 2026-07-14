@@ -26,7 +26,7 @@ async function handler(req, res) {
       return res.status(403).json({ message: 'Hanya General Affairs yang bisa mengelola armada.' });
     }
 
-    const { name, license_plate, status } = req.body || {};
+    const { name, license_plate, status, capacity, fuel_type, notes } = req.body || {};
 
     // Bangun SET dinamis hanya untuk field yang dikirim.
     const sets = [];
@@ -46,6 +46,18 @@ async function handler(req, res) {
       }
       sets.push('status = @status');
       params.status = status;
+    }
+    if (capacity !== undefined) {
+      sets.push('capacity = @capacity');
+      params.capacity = (capacity ?? '').toString().trim();
+    }
+    if (fuel_type !== undefined) {
+      sets.push('fuel_type = @fuel_type');
+      params.fuel_type = String(fuel_type).trim();
+    }
+    if (notes !== undefined) {
+      sets.push('notes = @notes');
+      params.notes = String(notes).trim();
     }
 
     if (sets.length === 0) {
