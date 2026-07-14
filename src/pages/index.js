@@ -5,7 +5,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
-import { StatusBadge, auditInfo, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
+import { StatusBadge, auditInfo, vehicleChangeNote, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
+import { isVehicleAvailable } from '../lib/vehicleStatus';
 
 const getEventColor = (status) => {
   const s = String(status || '');
@@ -57,8 +58,10 @@ export default function Home() {
     fetchBookings();
     getJson('/api/vehicles')
       .then((data) => {
-        setVehicles(data);
-        if (data.length > 0) setVehicleId((prev) => prev || data[0].id);
+        // Hanya kendaraan tersedia (Ready) yang bisa dipesan — status diatur GA.
+        const available = data.filter((v) => isVehicleAvailable(v.status));
+        setVehicles(available);
+        if (available.length > 0) setVehicleId((prev) => prev || available[0].id);
       })
       .catch((err) => setErrorMsg(err.message));
   }, [fetchBookings]);
@@ -222,6 +225,11 @@ export default function Home() {
               </p>
               {auditInfo(detail) && (
                 <p className="text-xs text-gray-400">{auditInfo(detail)}</p>
+              )}
+              {vehicleChangeNote(detail) && (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                  {vehicleChangeNote(detail)}
+                </p>
               )}
             </div>
 

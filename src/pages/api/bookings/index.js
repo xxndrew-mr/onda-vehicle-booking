@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import getBigQuery, { runDml } from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
 import { getUserByLarkId } from '../../../lib/users';
+import { isVehicleAvailable } from '../../../lib/vehicleStatus';
 
 const DATASET = 'onda_booking_db';
 
@@ -46,6 +47,20 @@ async function handler(req, res) {
       const MAX_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // maksimal 7 hari per booking
       if (endMs - startMs > MAX_DURATION_MS) {
         return res.status(400).json({ message: 'Durasi booking maksimal 7 hari.' });
+      }
+
+      // Kendaraan harus berstatus tersedia (Ready) — status diatur GA di menu Armada.
+      const [vrows] = await bigquery.query({
+        query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+        params: { vId: vehicle_id },
+      });
+      if (vrows.length === 0) {
+        return res.status(400).json({ message: 'Kendaraan tidak ditemukan.' });
+      }
+      if (!isVehicleAvailable(vrows[0].status)) {
+        return res.status(409).json({
+          message: `Kendaraan sedang tidak tersedia (status: ${vrows[0].status || 'tidak diketahui'}).`,
+        });
       }
 
       // Approver dari struktur organisasi Lark (disinkron saat login).

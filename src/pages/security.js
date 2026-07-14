@@ -1,3 +1,22 @@
+// =============================================================================
+// HALAMAN SECURITY DINONAKTIFKAN SEMENTARA (fitur belum dipakai).
+// Untuk mengaktifkan kembali: hapus stub di bawah, lalu hapus blok komentar
+// besar di bawahnya (kode asli tetap utuh). Aktifkan juga link "Security" di
+// src/components/Navbar.js.
+// =============================================================================
+
+export default function SecurityDisabled() {
+  return (
+    <div className="p-8 min-h-[60vh] flex items-center justify-center">
+      <div className="text-center text-gray-500">
+        <p className="text-lg font-semibold">Halaman Security dinonaktifkan sementara.</p>
+        <p className="text-sm mt-1">Fitur ini belum digunakan.</p>
+      </div>
+    </div>
+  );
+}
+
+/* ===== KODE ASLI (dinonaktifkan) — jangan hapus =====
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Clock, MapPin, User } from 'lucide-react';
 import { getJson } from '../lib/api';
@@ -79,3 +98,4 @@ export default function SecurityDashboard() {
     </div>
   );
 }
+===== AKHIR KODE ASLI ===== */

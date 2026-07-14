@@ -30,7 +30,8 @@ async function handler(req, res) {
     const baseSelect = `
       SELECT b.*,
              COALESCE(v.name, 'Kendaraan tidak dikenal') AS vehicle_name,
-             v.license_plate
+             v.license_plate,
+             v.status AS vehicle_status
       FROM \`${DATASET}.bookings\` b
       LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id`;
 

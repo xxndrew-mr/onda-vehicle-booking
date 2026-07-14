@@ -42,6 +42,13 @@ export function auditInfo(b) {
   }
 }
 
+// Catatan pergantian armada oleh GA (untuk pemohon).
+export function vehicleChangeNote(b) {
+  return b.vehicle_change_reason
+    ? `Kendaraan diganti oleh GA. Alasan: ${b.vehicle_change_reason}`
+    : '';
+}
+
 // Format timestamp — menerima string ISO ataupun objek BigQuery { value }.
 export const fmtTs = (t) => {
   const v = typeof t === 'string' ? t : t?.value;

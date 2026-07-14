@@ -1,19 +1,23 @@
 import getBigQuery, { runDml } from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
 import { getUserByLarkId } from '../../../lib/users';
+import { isVehicleAvailable } from '../../../lib/vehicleStatus';
 
 const DATASET = 'onda_booking_db';
 
 /**
  * Transisi status approval. Tahap & otorisasi ditentukan server-side dari data
- * booking + role TERKINI (dibaca ulang dari tabel users, bukan klaim JWT — supaya
- * user yang di-offboard/demote di Lark langsung kehilangan hak approval):
+ * booking + role TERKINI (dibaca ulang dari tabel users, bukan klaim JWT):
  *   Pending Supervisor --APPROVE--> Pending GA   (oleh supervisor ybs / ADMIN)
  *   Pending Supervisor --REJECT---> Rejected By Supervisor
  *   Pending GA         --APPROVE--> Approved     (oleh role GA / ADMIN)
  *   Pending GA         --REJECT---> Rejected By GA
  * CANCEL: pemohon (atau ADMIN) membatalkan booking-nya sendiri yang masih aktif
  *   (Pending Supervisor / Pending GA / Approved) --CANCEL--> Cancelled By User.
+ *
+ * Pergantian armada oleh GA: saat APPROVE tahap GA, GA boleh mengganti kendaraan
+ * HANYA jika kendaraan yang dibooking bermasalah (status != 'Ready'), WAJIB mengisi
+ * alasan, dan kendaraan pengganti harus 'Ready' + tidak bentrok di jam yang sama.
  */
 async function handler(req, res) {
   const { id } = req.query;
@@ -23,7 +27,7 @@ async function handler(req, res) {
     return res.status(405).json({ message: `Method ${req.method} tidak diizinkan.` });
   }
 
-  const { action } = req.body || {}; // 'APPROVE' | 'REJECT' | 'CANCEL'
+  const { action, new_vehicle_id, reason } = req.body || {}; // APPROVE | REJECT | CANCEL
   if (!['APPROVE', 'REJECT', 'CANCEL'].includes(action)) {
     return res.status(400).json({ message: 'Action tidak valid (APPROVE/REJECT/CANCEL).' });
   }
@@ -37,10 +41,12 @@ async function handler(req, res) {
       return res.status(401).json({ message: 'Profil user tidak ditemukan. Silakan login ulang.' });
     }
     const isAdmin = me.role === 'ADMIN';
+    const actor = `${me.name} (${me.lark_user_id})`;
 
-    // Ambil booking saat ini
+    // Ambil booking saat ini (termasuk kendaraan & jadwal untuk pergantian armada)
     const [rows] = await bigquery.query({
-      query: `SELECT status, supervisor_id, requester_id FROM \`${DATASET}.bookings\` WHERE id = @id`,
+      query: `SELECT status, supervisor_id, requester_id, vehicle_id, start_time, end_time
+              FROM \`${DATASET}.bookings\` WHERE id = @id`,
       params: { id },
     });
 
@@ -58,9 +64,7 @@ async function handler(req, res) {
         return res.status(403).json({ message: 'Hanya pemohon yang bisa membatalkan booking ini.' });
       }
       if (!['Pending Supervisor', 'Pending GA', 'Approved'].includes(currentStatus)) {
-        return res.status(409).json({
-          message: `Booking tidak bisa dibatalkan (status: ${currentStatus}).`,
-        });
+        return res.status(409).json({ message: `Booking tidak bisa dibatalkan (status: ${currentStatus}).` });
       }
       const affected = await runDml(
         `UPDATE \`${DATASET}.bookings\` SET status = 'Cancelled By User'
@@ -73,10 +77,93 @@ async function handler(req, res) {
       return res.status(200).json({ message: 'Booking dibatalkan.' });
     }
 
-    let nextStatus;
-    let stageField; // kolom audit yang di-update
+    // --- Tahap GA: APPROVE (opsional dengan pergantian armada) ---
+    if (currentStatus === 'Pending GA' && action === 'APPROVE') {
+      if (me.role !== 'GA' && !isAdmin) {
+        return res.status(403).json({ message: 'Hanya tim GA yang bisa memproses tahap ini.' });
+      }
 
-    // Otorisasi per tahap
+      const wantsSwap = new_vehicle_id && new_vehicle_id !== booking.vehicle_id;
+
+      if (wantsSwap) {
+        // 1. Hanya boleh ganti bila kendaraan asli BERMASALAH (status != Ready).
+        const [cur] = await bigquery.query({
+          query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+          params: { vId: booking.vehicle_id },
+        });
+        if (cur.length > 0 && isVehicleAvailable(cur[0].status)) {
+          return res.status(400).json({
+            message: 'Kendaraan yang diajukan tidak bermasalah — tidak boleh diganti. Ubah status kendaraan di menu Armada bila memang ada kendala.',
+          });
+        }
+
+        // 2. Alasan pergantian WAJIB.
+        if (!reason || !String(reason).trim()) {
+          return res.status(400).json({ message: 'Alasan pergantian kendaraan wajib diisi.' });
+        }
+
+        // 3. Kendaraan pengganti harus ada dan 'Ready'.
+        const [nv] = await bigquery.query({
+          query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+          params: { vId: new_vehicle_id },
+        });
+        if (nv.length === 0) {
+          return res.status(400).json({ message: 'Kendaraan pengganti tidak ditemukan.' });
+        }
+        if (!isVehicleAvailable(nv[0].status)) {
+          return res.status(409).json({ message: 'Kendaraan pengganti sedang tidak tersedia.' });
+        }
+
+        // 4. Kendaraan pengganti tidak boleh bentrok di jendela waktu booking.
+        const [conf] = await bigquery.query({
+          query: `SELECT id FROM \`${DATASET}.bookings\`
+                  WHERE vehicle_id = @nv AND id != @id
+                    AND status NOT LIKE 'Rejected%' AND status NOT LIKE 'Cancelled%'
+                    AND start_time < TIMESTAMP(@end) AND end_time > TIMESTAMP(@start)`,
+          params: {
+            nv: new_vehicle_id,
+            id,
+            start: booking.start_time.value,
+            end: booking.end_time.value,
+          },
+        });
+        if (conf.length > 0) {
+          return res.status(409).json({ message: 'Kendaraan pengganti sudah dipesan pada jam tersebut.' });
+        }
+
+        // 5. Simpan: ganti armada + approve, dengan precondition status.
+        const affected = await runDml(
+          `UPDATE \`${DATASET}.bookings\`
+           SET status = 'Approved',
+               vehicle_id = @newV,
+               original_vehicle_id = @oldV,
+               vehicle_change_reason = @reason,
+               vehicle_change_by = @actor,
+               vehicle_change_at = CURRENT_TIMESTAMP(),
+               ga_action_by = @actor,
+               ga_action_at = CURRENT_TIMESTAMP()
+           WHERE id = @id AND status = @expected`,
+          {
+            newV: new_vehicle_id,
+            oldV: booking.vehicle_id,
+            reason: String(reason).trim(),
+            actor,
+            id,
+            expected: currentStatus,
+          }
+        );
+        if (affected === 0) {
+          return res.status(409).json({ message: 'Booking baru saja diproses orang lain. Muat ulang halaman.' });
+        }
+        return res.status(200).json({ message: 'Disetujui dengan pergantian kendaraan.' });
+      }
+      // APPROVE GA tanpa pergantian → jatuh ke alur generik di bawah.
+    }
+
+    // --- Alur transisi generik (supervisor + GA tanpa swap + semua REJECT) ---
+    let nextStatus;
+    let stageField;
+
     if (currentStatus === 'Pending Supervisor') {
       const isTheSupervisor = booking.supervisor_id && booking.supervisor_id === me.lark_user_id;
       if (!isTheSupervisor && !isAdmin) {
@@ -98,21 +185,14 @@ async function handler(req, res) {
       });
     }
 
-    // Update dengan precondition status: hanya berhasil bila status masih sama
-    // seperti yang dibaca (cegah double-approve/approve-vs-reject yang balapan).
-    const updateQuery = `
-      UPDATE \`${DATASET}.bookings\`
-      SET status = @status,
-          ${stageField}_action_by = @actor,
-          ${stageField}_action_at = CURRENT_TIMESTAMP()
-      WHERE id = @id AND status = @expected`;
-
-    const affected = await runDml(updateQuery, {
-      status: nextStatus,
-      actor: `${me.name} (${me.lark_user_id})`,
-      id,
-      expected: currentStatus,
-    });
+    const affected = await runDml(
+      `UPDATE \`${DATASET}.bookings\`
+       SET status = @status,
+           ${stageField}_action_by = @actor,
+           ${stageField}_action_at = CURRENT_TIMESTAMP()
+       WHERE id = @id AND status = @expected`,
+      { status: nextStatus, actor, id, expected: currentStatus }
+    );
 
     if (affected === 0) {
       return res.status(409).json({ message: 'Booking baru saja diproses orang lain. Muat ulang halaman.' });

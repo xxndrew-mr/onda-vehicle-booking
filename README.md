@@ -8,7 +8,9 @@ Sistem booking mobil kantor internal berbasis web, terintegrasi penuh dengan **L
 |---|---|---|
 | Booking | `/` | Kalender mingguan (FullCalendar). Pilih kendaraan + slot waktu → isi keperluan → terkirim atas nama akun Lark Anda. Jadwal bentrok otomatis ditolak. |
 | Riwayat | `/riwayat` | Tab **Booking Saya** (semua pengajuan sendiri + batalkan) dan tab **Riwayat Persetujuan** (khusus supervisor/GA/ADMIN: daftar booking yang pernah diproses, dengan aksi tercatat per tahap). |
-| Approval | `/approval` | Dua antrian nyata: **(1)** pengajuan anggota tim yang supervisornya = Anda (otomatis dari struktur Lark), **(2)** antrian GA (hanya tampil untuk role GA/ADMIN). |
+| Approval | `/approval` | Dua antrian nyata: **(1)** pengajuan anggota tim yang supervisornya = Anda (otomatis dari struktur Lark), **(2)** antrian GA (hanya tampil untuk role GA/ADMIN). Di tahap GA, bila kendaraan bermasalah GA dapat mengganti armada dengan alasan wajib. |
+| Armada | `/armada` | **Khusus GA/ADMIN.** Tambah/ubah kendaraan & ubah status (Ready/In Use/Maintenance/Unavailable). Status langsung memengaruhi ketersediaan booking. |
+| ~~Security~~ | ~~`/security`~~ | Dinonaktifkan sementara (source di-comment, mudah diaktifkan kembali). |
 | Security | `/security` | Monitor gerbang: kendaraan ber-status **Approved** dengan plat nomor, pengguna, dan jam keluar. |
 
 ## Arsitektur Integrasi Lark
@@ -94,7 +96,8 @@ CREATE SCHEMA IF NOT EXISTS onda_booking_db;
 CREATE TABLE IF NOT EXISTS onda_booking_db.vehicles (
   id            STRING NOT NULL,
   name          STRING NOT NULL,
-  license_plate STRING
+  license_plate STRING,
+  status        STRING           -- Ready | In Use | Maintenance | Unavailable (hanya 'Ready' yang bisa dipesan)
 );
 
 CREATE TABLE IF NOT EXISTS onda_booking_db.bookings (
@@ -114,6 +117,10 @@ CREATE TABLE IF NOT EXISTS onda_booking_db.bookings (
   supervisor_action_at TIMESTAMP,
   ga_action_by         STRING,
   ga_action_at         TIMESTAMP,
+  original_vehicle_id   STRING,      -- kendaraan asli bila GA mengganti armada
+  vehicle_change_reason STRING,      -- alasan pergantian (wajib saat GA ganti)
+  vehicle_change_by     STRING,
+  vehicle_change_at     TIMESTAMP,
   created_at           TIMESTAMP
 );
 
@@ -154,7 +161,15 @@ ALTER TABLE onda_booking_db.bookings
   ADD COLUMN IF NOT EXISTS supervisor_action_by STRING,
   ADD COLUMN IF NOT EXISTS supervisor_action_at TIMESTAMP,
   ADD COLUMN IF NOT EXISTS ga_action_by STRING,
-  ADD COLUMN IF NOT EXISTS ga_action_at TIMESTAMP;
+  ADD COLUMN IF NOT EXISTS ga_action_at TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS original_vehicle_id STRING,
+  ADD COLUMN IF NOT EXISTS vehicle_change_reason STRING,
+  ADD COLUMN IF NOT EXISTS vehicle_change_by STRING,
+  ADD COLUMN IF NOT EXISTS vehicle_change_at TIMESTAMP;
+
+-- Manajemen armada:
+ALTER TABLE onda_booking_db.vehicles ADD COLUMN IF NOT EXISTS status STRING;
+UPDATE onda_booking_db.vehicles SET status = 'Ready' WHERE status IS NULL OR status = '';
 
 -- Petakan status lama ke skema baru (kalau tidak, booking lama tersangkut di
 -- luar semua antrian approval namun tetap memblokir slot):
@@ -217,12 +232,14 @@ Semua endpoint (kecuali `/api/auth/*`) memerlukan session; tanpa session → `40
 | `GET` | `/api/auth/callback` | Callback OAuth: verifikasi `state`, tukar `code`, sinkron user, set session |
 | `GET` | `/api/auth/me` | Identitas user dari session |
 | `POST` | `/api/auth/logout` | Hapus session aplikasi |
-| `GET` | `/api/vehicles` | Daftar kendaraan |
+| `GET` | `/api/vehicles` | Daftar kendaraan + status |
+| `POST` | `/api/vehicles` | Tambah kendaraan (**GA/ADMIN**) |
+| `PATCH` | `/api/vehicles/:id` | Ubah data/status kendaraan (**GA/ADMIN**) |
 | `GET` | `/api/bookings` | Semua booking (kalender) + nama kendaraan & plat |
 | `POST` | `/api/bookings` | Buat booking `{ vehicle_id, start_time, end_time, purpose }` — pemohon & supervisor otomatis dari session/Lark; 409 jika bentrok |
 | `GET` | `/api/bookings/pending` | Antrian saya: `{ supervisorQueue, gaQueue, role }` |
 | `GET` | `/api/bookings/history` | Riwayat: `{ mine, processed, canApprove }` — `processed` = yang pernah diproses user (supervisor/GA/ADMIN) |
-| `PATCH` | `/api/bookings/:id` | `{ action: "APPROVE"\|"REJECT"\|"CANCEL" }` — tahap & otorisasi ditentukan server; CANCEL oleh pemohon/ADMIN membebaskan slot |
+| `PATCH` | `/api/bookings/:id` | `{ action: "APPROVE"\|"REJECT"\|"CANCEL", new_vehicle_id?, reason? }` — tahap & otorisasi ditentukan server; CANCEL oleh pemohon/ADMIN membebaskan slot; GA boleh kirim `new_vehicle_id`+`reason` hanya bila kendaraan bermasalah |
 
 ### Proses sinkronisasi user
 

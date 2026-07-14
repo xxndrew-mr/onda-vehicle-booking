@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { History, ClipboardCheck, Check, X } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
-import { StatusBadge, auditInfo, actorName, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
+import { StatusBadge, auditInfo, vehicleChangeNote, actorName, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
 
 /**
  * Aksi yang tercatat pada sebuah booking (untuk tab Riwayat Persetujuan).
@@ -140,6 +140,9 @@ export default function Riwayat() {
                           <StatusBadge status={b.status} />
                           {auditInfo(b) && (
                             <div className="text-xs text-gray-400 mt-1">{auditInfo(b)}</div>
+                          )}
+                          {vehicleChangeNote(b) && (
+                            <div className="text-xs text-amber-700 mt-1">{vehicleChangeNote(b)}</div>
                           )}
                         </td>
                         <td className="py-3 whitespace-nowrap text-right">

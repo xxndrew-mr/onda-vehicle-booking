@@ -24,7 +24,7 @@ export default function Footer() {
         {/* Bagian yang mengembang saat hover */}
         <div className="max-w-0 overflow-hidden opacity-0 group-hover:max-w-[300px] group-hover:opacity-100 transition-all duration-500 ease-in-out whitespace-nowrap">
           <a
-            href="https://www.linkedin.com/in/andremarshandito"
+            href="https://www.linkedin.com/in/andre-marshandito/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-blue-300 hover:text-white transition-colors duration-200"

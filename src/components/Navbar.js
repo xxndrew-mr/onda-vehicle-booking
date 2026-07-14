@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Car, CalendarDays, ClipboardCheck, ShieldCheck, History, LogOut, User } from 'lucide-react';
+import { Car, CalendarDays, ClipboardCheck, Truck, History, LogOut, User } from 'lucide-react';
+// ShieldCheck (menu Security) dinonaktifkan sementara — lihat link di bawah.
 import { useAuth } from './AuthContext';
 
 const ROLE_LABELS = {
@@ -19,12 +20,16 @@ export default function Navbar() {
   // supervisor (leader divisi di Lark / punya bawahan) atau GA/Admin.
   const canApprove =
     !!user && (user.is_supervisor || user.role === 'GA' || user.role === 'ADMIN');
+  // Manajemen armada khusus GA (ADMIN sebagai superuser juga diberi akses).
+  const isGa = !!user && (user.role === 'GA' || user.role === 'ADMIN');
 
   const links = [
     { href: '/', label: 'Booking', icon: CalendarDays, show: true },
     { href: '/riwayat', label: 'Riwayat', icon: History, show: true },
     { href: '/approval', label: 'Approval', icon: ClipboardCheck, show: canApprove },
-    { href: '/security', label: 'Security', icon: ShieldCheck, show: true },
+    { href: '/armada', label: 'Armada', icon: Truck, show: isGa },
+    // Menu Security dinonaktifkan sementara (fitur belum dipakai):
+    // { href: '/security', label: 'Security', icon: ShieldCheck, show: true },
   ].filter((l) => l.show);
 
   const handleLogout = async () => {
