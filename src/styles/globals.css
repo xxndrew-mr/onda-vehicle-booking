@@ -6,6 +6,7 @@
   --ink: #0B1020; --ink-2: #5A6178; --muted: #9A9FB0;
   --line: #E6E9F3;
   --blue: #1B3BF5; --blue-ink: #0E2296; --blue-wash: #EEF1FE;
+  --brand: #017CC2; --brand-deep: #016AA6; /* biru logo (tetesan) — navbar & footer */
   --danger: #C0392B; --danger-wash: #FBEDEC; --danger-line: #F0CFCB;
   --ok: #0E7A3B; --ok-wash: #EAF7EF; --ok-line: #CDE9D8;
   --radius: 12px;
@@ -120,16 +121,10 @@ select:focus-visible, textarea:focus-visible {
 .panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); }
 .hairline { border-top: 1px solid var(--line); }
 
-/* Permukaan biru (navbar melayang + footer) — beri warna & bobot pada layout
-   yang tadinya terlalu putih. Teks putih, gradasi electric-blue → deep-blue. */
-.nav-surface {
-  background: linear-gradient(135deg, rgba(27, 59, 245, 0.95) 0%, rgba(14, 34, 150, 0.96) 100%);
-  color: #fff;
-}
-.footer-surface {
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-ink) 100%);
-  color: #fff;
-}
+/* Permukaan biru (navbar melayang + footer) — warna rata & cerah, persis
+   biru tetesan pada logo (--brand). Teks putih. */
+.nav-surface { background: var(--brand); color: #fff; }
+.footer-surface { background: var(--brand); color: #fff; }
 
 /* ============================ Data table ============================ */
 .data-table { width: 100%; border-collapse: collapse; }

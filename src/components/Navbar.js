@@ -72,7 +72,7 @@ export default function Navbar() {
                 title={label}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors ${
                   pathname === href
-                    ? 'bg-white text-[var(--blue-ink)] shadow-sm'
+                    ? 'bg-white text-[var(--brand-deep)] shadow-sm'
                     : 'text-white/85 hover:bg-white/15 hover:text-white'
                 }`}
               >
