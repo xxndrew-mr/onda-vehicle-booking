@@ -120,6 +120,17 @@ select:focus-visible, textarea:focus-visible {
 .panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); }
 .hairline { border-top: 1px solid var(--line); }
 
+/* Permukaan biru (navbar melayang + footer) — beri warna & bobot pada layout
+   yang tadinya terlalu putih. Teks putih, gradasi electric-blue → deep-blue. */
+.nav-surface {
+  background: linear-gradient(135deg, rgba(27, 59, 245, 0.95) 0%, rgba(14, 34, 150, 0.96) 100%);
+  color: #fff;
+}
+.footer-surface {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-ink) 100%);
+  color: #fff;
+}
+
 /* ============================ Data table ============================ */
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {

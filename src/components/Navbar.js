@@ -50,32 +50,32 @@ export default function Navbar() {
 
   return (
     <>
-    {/* Floating: menempel di atas (sticky), pill putih dengan hairline. */}
+    {/* Floating: menempel di atas (sticky), pill biru melayang dengan teks putih. */}
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
-      <nav className="max-w-6xl mx-auto bg-[var(--paper)]/85 backdrop-blur-md border border-[var(--line)] rounded-[var(--radius)] shadow-[0_16px_40px_-26px_rgba(11,16,32,0.4)]">
+      <nav className="max-w-6xl mx-auto nav-surface backdrop-blur-md ring-1 ring-white/10 rounded-[var(--radius)] shadow-[0_18px_44px_-24px_rgba(14,34,150,0.65)]">
         <div className="px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <span className="grid place-items-center w-8 h-8 rounded-lg bg-[var(--blue)] text-white">
-              <Car size={17} />
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-white/15 text-white">
+              <Car size={18} />
             </span>
-            <span className="hidden lg:block font-display text-[18px] text-[var(--ink)]">Car Booking</span>
+            <span className="hidden lg:block font-display text-[18px] text-white leading-none">Car Booking</span>
           </Link>
 
-          {/* Menu */}
+          {/* Menu — label lebih besar & jelas (dibaca lintas usia) */}
           <div className="flex items-center gap-1">
             {links.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
                 title={label}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-full mono text-[11px] uppercase tracking-[0.12em] transition-colors ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors ${
                   pathname === href
-                    ? 'bg-[var(--blue-wash)] text-[var(--blue)]'
-                    : 'text-[var(--ink-2)] hover:text-[var(--ink)]'
+                    ? 'bg-white text-[var(--blue-ink)] shadow-sm'
+                    : 'text-white/85 hover:bg-white/15 hover:text-white'
                 }`}
               >
-                <Icon size={15} />
+                <Icon size={17} />
                 <span className="hidden md:inline">{label}</span>
               </Link>
             ))}
@@ -83,22 +83,22 @@ export default function Navbar() {
 
           {/* User + Reset */}
           {user && (
-            <div className="flex items-center gap-2.5 shrink-0 pl-2 sm:pl-3 border-l border-[var(--line)]">
-              <div className="text-right leading-tight hidden md:block max-w-[9rem]">
-                <div className="text-sm font-medium text-[var(--ink)] truncate">{user.name}</div>
-                <div className="mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] truncate">
+            <div className="flex items-center gap-2.5 shrink-0 pl-2 sm:pl-3 border-l border-white/20">
+              <div className="text-right leading-tight hidden md:block max-w-[10rem]">
+                <div className="text-sm font-semibold text-white truncate">{user.name}</div>
+                <div className="text-[11px] text-white/70 truncate">
                   {ROLE_LABELS[user.role] || user.role}
                   {user.department ? ` · ${user.department}` : ''}
                 </div>
               </div>
-              <Avatar src={user.avatar} name={user.name} size={34} className="ring-1 ring-[var(--line)]" />
+              <Avatar src={user.avatar} name={user.name} size={34} className="ring-2 ring-white/30" />
               <button
                 onClick={resetSession}
                 disabled={resetting}
                 title="Reset Session — ambil ulang data terbaru dari Lark"
-                className="grid place-items-center w-9 h-9 rounded-full border border-[var(--line)] text-[var(--ink-2)] hover:border-[var(--ink)] hover:text-[var(--ink)] transition disabled:opacity-60 shrink-0"
+                className="grid place-items-center w-9 h-9 rounded-full border border-white/30 text-white/90 hover:bg-white/15 hover:text-white transition disabled:opacity-60 shrink-0"
               >
-                <RotateCcw size={15} className={resetting ? 'animate-spin' : ''} />
+                <RotateCcw size={16} className={resetting ? 'animate-spin' : ''} />
               </button>
             </div>
           )}

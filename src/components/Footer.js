@@ -15,21 +15,28 @@ function LinkedinIcon({ size = 16, className = '' }) {
 }
 
 export default function Footer() {
+  // Kredit "Andre" tersembunyi — muncul melebar saat kursor mengarah ke footer
+  // (atau saat tautannya difokus via keyboard, agar tetap aksesibel).
   return (
-    <footer className="border-t border-[var(--line)] bg-[var(--paper)] mt-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-3">
-        <span className="mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">
+    <footer className="footer-surface mt-16 group cursor-default">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-center gap-0 transition-all duration-300 group-hover:gap-3">
+        {/* Copyright permanen */}
+        <span className="mono text-[11px] uppercase tracking-[0.14em] text-white/85">
           © 2025 — PT Onda Mega Integra
         </span>
-        <a
-          href="https://www.linkedin.com/in/andre-marshandito/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group inline-flex items-center gap-2 mono text-[11px] uppercase tracking-[0.14em] text-[var(--ink-2)] hover:text-[var(--blue)] transition-colors"
-        >
-          <span>Created by Andre Marshandito</span>
-          <LinkedinIcon size={14} className="transition-transform group-hover:-translate-y-0.5" />
-        </a>
+
+        {/* Bagian yang melebar saat hover / fokus keyboard */}
+        <div className="max-w-0 opacity-0 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out group-hover:max-w-[340px] group-hover:opacity-100 group-focus-within:max-w-[340px] group-focus-within:opacity-100">
+          <a
+            href="https://www.linkedin.com/in/andre-marshandito/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 pl-1 mono text-[11px] uppercase tracking-[0.14em] text-white/75 hover:text-white transition-colors"
+          >
+            <span>— Created by Andre Marshandito</span>
+            <LinkedinIcon size={14} className="transition-transform group-hover:-translate-y-0.5" />
+          </a>
+        </div>
       </div>
     </footer>
   );
