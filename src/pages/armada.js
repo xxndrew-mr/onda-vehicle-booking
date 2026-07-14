@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Truck, Plus, Pencil } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
+import Toast from '../components/Toast';
 import { VEHICLE_STATUSES, VEHICLE_STATUS_META } from '../lib/vehicleStatus';
 
 function StatusBadge({ status }) {
@@ -21,7 +22,7 @@ export default function Armada() {
 
   const [vehicles, setVehicles] = useState([]);
   const [errorMsg, setErrorMsg] = useState('');
-  const [notice, setNotice] = useState('');
+  const [toast, setToast] = useState({ message: '', type: 'success' });
   const [form, setForm] = useState(null); // null | emptyForm(tambah) | vehicle(edit)
   const [saving, setSaving] = useState(false);
 
@@ -42,20 +43,18 @@ export default function Armada() {
   const changeStatus = async (v, status) => {
     const prev = v.status;
     setVehicles((list) => list.map((x) => (x.id === v.id ? { ...x, status } : x)));
-    setNotice(`Status ${v.name} diubah menjadi ${status}.`);
-    setErrorMsg('');
+    setToast({ message: `Status ${v.name} diubah menjadi ${status}.`, type: 'success' });
     try {
       await sendJson(`/api/vehicles/${v.id}`, 'PATCH', { status });
     } catch (e) {
-      setNotice('');
-      setErrorMsg(e.message);
+      setToast({ message: e.message, type: 'error' });
       setVehicles((list) => list.map((x) => (x.id === v.id ? { ...x, status: prev } : x)));
     }
   };
 
   const saveForm = async () => {
     if (!form.name.trim()) {
-      setErrorMsg('Nama kendaraan wajib diisi.');
+      setToast({ message: 'Nama kendaraan wajib diisi.', type: 'error' });
       return;
     }
     setSaving(true);
@@ -66,20 +65,19 @@ export default function Armada() {
           license_plate: form.license_plate,
           status: form.status,
         });
-        setNotice('Kendaraan diperbarui.');
+        setToast({ message: 'Kendaraan diperbarui.', type: 'success' });
       } else {
         await sendJson('/api/vehicles', 'POST', {
           name: form.name,
           license_plate: form.license_plate,
           status: form.status,
         });
-        setNotice('Kendaraan ditambahkan.');
+        setToast({ message: 'Kendaraan ditambahkan.', type: 'success' });
       }
       setForm(null);
-      setErrorMsg('');
       fetchVehicles();
     } catch (e) {
-      setErrorMsg(e.message);
+      setToast({ message: e.message, type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -115,14 +113,15 @@ export default function Armada() {
           </button>
         </div>
 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: '', type: 'success' })}
+        />
+
         {errorMsg && (
           <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg">
             <span className="font-semibold">Gagal:</span> {errorMsg}
-          </div>
-        )}
-        {notice && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-300 text-green-700 rounded-lg">
-            {notice}
           </div>
         )}
 

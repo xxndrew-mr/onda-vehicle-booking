@@ -36,7 +36,8 @@
       "Bash(node --input-type=module -e ' *)",
       "WebFetch(domain:github.com)",
       "Bash(curl -s -o /dev/null -w \"status=%{http_code} type=%{content_type} size=%{size_download}bytes\\\\n\" \"https://s16-imfile-sg.feishucdn.com/static-resource/v1/v3_00134_1a3922f6-9406-4d71-b07e-f661dac764ix~?image_size=72x72&cut_type=&quality=&format=image&sticker_format=.webp\")",
-      "Bash(curl -s -o /dev/null -w \"240x240: status=%{http_code} type=%{content_type} size=%{size_download}b\\\\n\" \"https://s16-imfile-sg.feishucdn.com/static-resource/v1/v3_00134_1a3922f6-9406-4d71-b07e-f661dac764ix~?image_size=240x240&cut_type=&quality=&format=image&sticker_format=.webp\")"
+      "Bash(curl -s -o /dev/null -w \"240x240: status=%{http_code} type=%{content_type} size=%{size_download}b\\\\n\" \"https://s16-imfile-sg.feishucdn.com/static-resource/v1/v3_00134_1a3922f6-9406-4d71-b07e-f661dac764ix~?image_size=240x240&cut_type=&quality=&format=image&sticker_format=.webp\")",
+      "Bash(grep -n \"notice\\\\|oleh \\\\${a.by}\\\\|a.by\\\\|Aksi Tercatat\\\\|recordedActions\\(b\\).map\" src/pages/riwayat.js)"
     ]
   }
 }

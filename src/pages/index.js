@@ -5,9 +5,10 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
-import { StatusBadge, auditInfo, vehicleChangeNote, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
+import { StatusBadge, AuditLine, vehicleChangeNote, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
 import { isVehicleAvailable } from '../lib/vehicleStatus';
 import Avatar from '../components/Avatar';
+import Toast from '../components/Toast';
 
 const getEventColor = (status) => {
   const s = String(status || '');
@@ -25,7 +26,7 @@ export default function Home() {
   const [vehicles, setVehicles] = useState([]);
   const [vehicleId, setVehicleId] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [notice, setNotice] = useState('');
+  const [toast, setToast] = useState({ message: '', type: 'success' });
 
   // Modal booking (pengganti window.prompt yang tidak selalu ada di webview Lark).
   const [draft, setDraft] = useState(null); // { start, end }
@@ -87,7 +88,7 @@ export default function Home() {
         purpose: purpose.trim(),
       });
       setDraft(null);
-      setNotice(`Booking berhasil diajukan! Status: ${data.status || 'Pending'}`);
+      setToast({ message: `Booking berhasil diajukan! Status: ${data.status || 'Pending'}`, type: 'success' });
       fetchBookings();
     } catch (err) {
       setErrorMsg(err.message);
@@ -101,7 +102,7 @@ export default function Home() {
     try {
       await sendJson(`/api/bookings/${id}`, 'PATCH', { action: 'CANCEL' });
       setDetail(null);
-      setNotice('Booking dibatalkan.');
+      setToast({ message: 'Booking dibatalkan.', type: 'success' });
       fetchBookings();
     } catch (err) {
       setErrorMsg(err.message);
@@ -143,11 +144,11 @@ export default function Home() {
           </p>
         )}
 
-        {notice && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-300 text-green-700 rounded-lg">
-            {notice}
-          </div>
-        )}
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: '', type: 'success' })}
+        />
 
         {errorMsg && (
           <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg">
@@ -228,9 +229,7 @@ export default function Home() {
               <p className="flex items-center gap-2">
                 <span className="font-medium">Status:</span> <StatusBadge status={detail.status} />
               </p>
-              {auditInfo(detail) && (
-                <p className="text-xs text-gray-400">{auditInfo(detail)}</p>
-              )}
+              <div className="text-xs text-gray-400"><AuditLine b={detail} size={18} /></div>
               {vehicleChangeNote(detail) && (
                 <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
                   {vehicleChangeNote(detail)}

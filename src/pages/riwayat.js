@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { History, ClipboardCheck, Check, X } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
-import { StatusBadge, auditInfo, vehicleChangeNote, actorName, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
+import { StatusBadge, AuditLine, vehicleChangeNote, actorName, actorId, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
 import Avatar from '../components/Avatar';
+import Person from '../components/Person';
+import Toast from '../components/Toast';
 
 /**
  * Aksi yang tercatat pada sebuah booking (untuk tab Riwayat Persetujuan).
@@ -15,6 +17,7 @@ function recordedActions(b) {
     acts.push({
       stage: 'Supervisor',
       by: actorName(b.supervisor_action_by),
+      byId: actorId(b.supervisor_action_by),
       at: b.supervisor_action_at,
       approved: b.status !== 'Rejected By Supervisor',
     });
@@ -23,6 +26,7 @@ function recordedActions(b) {
     acts.push({
       stage: 'GA',
       by: actorName(b.ga_action_by),
+      byId: actorId(b.ga_action_by),
       at: b.ga_action_at,
       approved: b.status !== 'Rejected By GA',
     });
@@ -34,7 +38,7 @@ export default function Riwayat() {
   const [data, setData] = useState({ mine: [], processed: [], canApprove: false, isAdmin: false });
   const [tab, setTab] = useState('mine');
   const [errorMsg, setErrorMsg] = useState('');
-  const [notice, setNotice] = useState('');
+  const [toast, setToast] = useState({ message: '', type: 'success' });
 
   const fetchHistory = useCallback(() => {
     getJson('/api/bookings/history')
@@ -55,13 +59,11 @@ export default function Riwayat() {
       ...d,
       mine: d.mine.map((b) => (b.id === id ? { ...b, status: 'Cancelled By User' } : b)),
     }));
-    setNotice('Booking dibatalkan.');
-    setErrorMsg('');
+    setToast({ message: 'Booking dibatalkan.', type: 'success' });
     try {
       await sendJson(`/api/bookings/${id}`, 'PATCH', { action: 'CANCEL' });
     } catch (err) {
-      setNotice('');
-      setErrorMsg(err.message);
+      setToast({ message: err.message, type: 'error' });
       fetchHistory();
     }
   };
@@ -89,15 +91,15 @@ export default function Riwayat() {
           {data.canApprove && tabBtn('processed', 'Riwayat Persetujuan', ClipboardCheck)}
         </div>
 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: '', type: 'success' })}
+        />
+
         {errorMsg && (
           <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg">
             <span className="font-semibold">Gagal:</span> {errorMsg}
-          </div>
-        )}
-
-        {notice && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-300 text-green-700 rounded-lg">
-            {notice}
           </div>
         )}
 
@@ -141,9 +143,7 @@ export default function Riwayat() {
                         </td>
                         <td className="py-3 pr-4">
                           <StatusBadge status={b.status} />
-                          {auditInfo(b) && (
-                            <div className="text-xs text-gray-400 mt-1">{auditInfo(b)}</div>
-                          )}
+                          <div className="text-xs text-gray-400 mt-1"><AuditLine b={b} /></div>
                           {vehicleChangeNote(b) && (
                             <div className="text-xs text-amber-700 mt-1">{vehicleChangeNote(b)}</div>
                           )}
@@ -227,13 +227,15 @@ export default function Riwayat() {
                           {recordedActions(b).map((a) => (
                             <div key={a.stage} className="flex items-center gap-1.5 text-xs whitespace-nowrap">
                               {a.approved ? (
-                                <Check size={13} className="text-green-600" />
+                                <Check size={13} className="text-green-600 shrink-0" />
                               ) : (
-                                <X size={13} className="text-red-600" />
+                                <X size={13} className="text-red-600 shrink-0" />
                               )}
-                              <span className="text-gray-600">
+                              <span className="text-gray-600 inline-flex items-center gap-1">
                                 {a.stage}: {a.approved ? 'Disetujui' : 'Ditolak'}
-                                {a.by ? ` oleh ${a.by}` : ''}
+                                {a.by ? (
+                                  <>oleh <Person name={a.by} openId={a.byId} size={16} /></>
+                                ) : null}
                               </span>
                               <span className="text-gray-400">· {fmtTs(a.at)}</span>
                             </div>

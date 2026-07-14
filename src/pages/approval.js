@@ -3,6 +3,8 @@ import { Check, X, Car, UserCheck, Building2, AlertTriangle } from 'lucide-react
 import { getJson, sendJson } from '../lib/api';
 import { isVehicleAvailable, VEHICLE_STATUS_META } from '../lib/vehicleStatus';
 import Avatar from '../components/Avatar';
+import Person from '../components/Person';
+import Toast from '../components/Toast';
 
 const fmt = (t) => (t?.value ? new Date(t.value).toLocaleString('id-ID') : '-');
 
@@ -158,7 +160,7 @@ export default function Approvals() {
   const [queues, setQueues] = useState({ supervisorQueue: [], gaQueue: [], role: '' });
   const [availableVehicles, setAvailableVehicles] = useState([]);
   const [errorMsg, setErrorMsg] = useState('');
-  const [actionMsg, setActionMsg] = useState('');
+  const [toast, setToast] = useState({ message: '', type: 'success' });
 
   const fetchPending = useCallback(() => {
     getJson('/api/bookings/pending')
@@ -183,14 +185,12 @@ export default function Approvals() {
       supervisorQueue: q.supervisorQueue.filter((b) => b.id !== id),
       gaQueue: q.gaQueue.filter((b) => b.id !== id),
     }));
-    setErrorMsg('');
     try {
       const res = await sendJson(`/api/bookings/${id}`, 'PATCH', { action, ...extra });
-      setActionMsg(res.message || 'Berhasil diproses.');
+      setToast({ message: res.message || 'Berhasil diproses.', type: 'success' });
     } catch (err) {
       // Gagal → kembalikan tampilan agar sinkron dengan server.
-      setActionMsg('');
-      setErrorMsg(err.message);
+      setToast({ message: err.message, type: 'error' });
       fetchPending();
     }
   };
@@ -204,14 +204,15 @@ export default function Approvals() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Persetujuan Booking</h1>
 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: '', type: 'success' })}
+        />
+
         {errorMsg && (
           <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg">
             <span className="font-semibold">Gagal:</span> {errorMsg}
-          </div>
-        )}
-        {actionMsg && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-300 text-green-700 rounded-lg">
-            {actionMsg}
           </div>
         )}
 
@@ -239,9 +240,18 @@ export default function Approvals() {
                   item={item}
                   onAction={handleAction}
                   stageInfo={
-                    isAdmin
-                      ? `Supervisor pemohon: ${item.supervisor_name || '—'}`
-                      : 'Anda adalah supervisor pemohon (dari struktur organisasi Lark).'
+                    isAdmin ? (
+                      <span className="inline-flex items-center gap-1">
+                        Supervisor pemohon:{' '}
+                        {item.supervisor_name ? (
+                          <Person name={item.supervisor_name} openId={item.supervisor_id} size={18} />
+                        ) : (
+                          '—'
+                        )}
+                      </span>
+                    ) : (
+                      'Anda adalah supervisor pemohon (dari struktur organisasi Lark).'
+                    )
                   }
                 />
               ))}
@@ -267,9 +277,14 @@ export default function Approvals() {
                     onAction={handleAction}
                     availableVehicles={availableVehicles}
                     stageInfo={
-                      item.supervisor_name
-                        ? `Sudah disetujui supervisor: ${item.supervisor_name}`
-                        : 'Langsung ke GA (pemohon tidak punya supervisor di Lark).'
+                      item.supervisor_name ? (
+                        <span className="inline-flex items-center gap-1">
+                          Sudah disetujui supervisor:{' '}
+                          <Person name={item.supervisor_name} openId={item.supervisor_id} size={18} />
+                        </span>
+                      ) : (
+                        'Langsung ke GA (pemohon tidak punya supervisor di Lark).'
+                      )
                     }
                   />
                 ))}

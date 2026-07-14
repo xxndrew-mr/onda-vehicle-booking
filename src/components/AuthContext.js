@@ -1,18 +1,18 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
-const AuthContext = createContext({ user: null, loading: true });
+const AuthContext = createContext({ user: null, loading: true, avatarOf: () => '' });
 
 // Halaman publik yang tidak boleh memicu auto-login (mencegah loop redirect).
 const PUBLIC_PATHS = ['/auth-error'];
 
 /**
- * Muat identitas user dari session (/api/auth/me). Halaman sudah diproteksi
- * di sisi server (proxy.js) — provider ini untuk menampilkan identitas di UI
- * dan menangani session yang kedaluwarsa di tengah pemakaian.
+ * Muat identitas user (/api/auth/me) + direktori foto profil semua user
+ * (/api/users/directory) untuk menampilkan avatar di mana pun nama muncul.
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [people, setPeople] = useState({}); // open_id → { name, avatar }
 
   useEffect(() => {
     const isPublic = PUBLIC_PATHS.includes(window.location.pathname);
@@ -20,9 +20,7 @@ export function AuthProvider({ children }) {
     fetch('/api/auth/me')
       .then((res) => {
         if (res.status === 401) {
-          // Di halaman publik (mis. /auth-error) jangan auto-login → cegah loop redirect.
           if (isPublic) return null;
-          // Session habis → ulangi SSO Lark, kembali ke halaman semula (dengan query).
           const dest = window.location.pathname + window.location.search;
           window.location.href = `/api/auth/login?redirect_to=${encodeURIComponent(dest)}`;
           return null;
@@ -34,9 +32,21 @@ export function AuthProvider({ children }) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    // Direktori avatar (abaikan bila gagal/401).
+    fetch('/api/users/directory')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((map) => {
+        if (map) setPeople(map);
+      })
+      .catch(() => {});
   }, []);
 
-  return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>;
+  const avatarOf = (openId) => (openId && people[openId]?.avatar) || '';
+
+  return (
+    <AuthContext.Provider value={{ user, loading, avatarOf }}>{children}</AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

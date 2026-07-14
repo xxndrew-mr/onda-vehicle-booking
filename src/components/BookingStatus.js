@@ -1,4 +1,5 @@
 // Utilitas status booking yang dipakai lintas halaman (booking, riwayat).
+import Person from './Person';
 
 export const ACTIVE_STATUSES = ['Pending Supervisor', 'Pending GA', 'Approved'];
 
@@ -24,6 +25,12 @@ export function StatusBadge({ status }) {
 // Audit "Name (ou_xxx)" → "Name" untuk tampilan.
 export const actorName = (s) => String(s || '').replace(/\s*\(ou_[^)]*\)\s*$/, '');
 
+// Audit "Name (ou_xxx)" → "ou_xxx" (open_id, untuk mencari avatar).
+export const actorId = (s) => {
+  const m = String(s || '').match(/\((ou_[^)]+)\)/);
+  return m ? m[1] : '';
+};
+
 // Keterangan tindak lanjut per status (siapa yang memproses / sedang ditunggu).
 export function auditInfo(b) {
   switch (b.status) {
@@ -39,6 +46,31 @@ export function auditInfo(b) {
       return b.ga_action_by ? `Oleh: ${actorName(b.ga_action_by)}` : '';
     default:
       return '';
+  }
+}
+
+// Baris info approval dengan foto profil orang yang disebut.
+export function AuditLine({ b, size = 16, className = '' }) {
+  const line = (prefix, name, openId) =>
+    name ? (
+      <span className={`inline-flex items-center gap-1 flex-wrap ${className}`}>
+        {prefix} <Person name={name} openId={openId} size={size} />
+      </span>
+    ) : null;
+
+  switch (b.status) {
+    case 'Pending Supervisor':
+      return line('Menunggu:', b.supervisor_name, b.supervisor_id);
+    case 'Pending GA':
+      return line('Disetujui supervisor:', actorName(b.supervisor_action_by), actorId(b.supervisor_action_by));
+    case 'Approved':
+      return line('Disetujui GA:', actorName(b.ga_action_by), actorId(b.ga_action_by));
+    case 'Rejected By Supervisor':
+      return line('Ditolak oleh:', actorName(b.supervisor_action_by), actorId(b.supervisor_action_by));
+    case 'Rejected By GA':
+      return line('Ditolak oleh:', actorName(b.ga_action_by), actorId(b.ga_action_by));
+    default:
+      return null;
   }
 }
 
