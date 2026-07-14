@@ -34,7 +34,6 @@ export default function Riwayat() {
   const [tab, setTab] = useState('mine');
   const [errorMsg, setErrorMsg] = useState('');
   const [notice, setNotice] = useState('');
-  const [cancelling, setCancelling] = useState(false);
 
   const fetchHistory = useCallback(() => {
     getJson('/api/bookings/history')
@@ -50,16 +49,19 @@ export default function Riwayat() {
   }, [fetchHistory]);
 
   const cancelBooking = async (id) => {
-    setCancelling(true);
+    // Optimistic: ubah status baris jadi Dibatalkan seketika.
+    setData((d) => ({
+      ...d,
+      mine: d.mine.map((b) => (b.id === id ? { ...b, status: 'Cancelled By User' } : b)),
+    }));
+    setNotice('Booking dibatalkan.');
+    setErrorMsg('');
     try {
       await sendJson(`/api/bookings/${id}`, 'PATCH', { action: 'CANCEL' });
-      setNotice('Booking dibatalkan.');
-      fetchHistory();
     } catch (err) {
       setNotice('');
       setErrorMsg(err.message);
-    } finally {
-      setCancelling(false);
+      fetchHistory();
     }
   };
 
@@ -149,8 +151,7 @@ export default function Riwayat() {
                           {ACTIVE_STATUSES.includes(b.status) && (
                             <button
                               onClick={() => cancelBooking(b.id)}
-                              disabled={cancelling}
-                              className="text-red-600 hover:underline text-xs font-medium disabled:opacity-50"
+                              className="text-red-600 hover:underline text-xs font-medium"
                             >
                               Batalkan
                             </button>

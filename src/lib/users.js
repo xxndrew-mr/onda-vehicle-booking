@@ -2,6 +2,17 @@ import getBigQuery from './bigquery';
 
 const DATASET = 'onda_booking_db';
 
+// Cache row user (per instance server) untuk menghindari query BigQuery ~1 dtk
+// di SETIAP aksi. TTL pendek supaya perubahan role/atasan tetap cepat berlaku
+// (revocation tetap terbatas maksimal TTL ini, jauh lebih cepat dari session 1 hari).
+const USER_TTL_MS = 30 * 1000;
+const userCache = new Map(); // larkUserId -> { row, at }
+
+function cacheUser(id, row) {
+  userCache.set(id, { row, at: Date.now() });
+  return row;
+}
+
 /**
  * Auto-provisioning + sinkronisasi: upsert profil Lark ke tabel users
  * setiap kali login (MERGE = DML, langsung bisa dibaca/di-update).
@@ -56,16 +67,26 @@ export async function upsertUser(profile) {
       avatar_url: profile.avatar_url || '',
     },
   });
+
+  // Segarkan cache dengan data terbaru (login baru saja menghitung ulang role).
+  userCache.delete(profile.lark_user_id);
 }
 
-/** Ambil satu user tersinkron berdasarkan Lark user id (open_id). */
-export async function getUserByLarkId(larkUserId) {
+/**
+ * Ambil satu user tersinkron berdasarkan Lark user id (open_id).
+ * Memakai cache TTL pendek; lewatkan { fresh: true } untuk bypass.
+ */
+export async function getUserByLarkId(larkUserId, { fresh = false } = {}) {
+  if (!fresh) {
+    const c = userCache.get(larkUserId);
+    if (c && Date.now() - c.at < USER_TTL_MS) return c.row;
+  }
   const bigquery = getBigQuery();
   const [rows] = await bigquery.query({
     query: `SELECT * FROM \`${DATASET}.users\` WHERE lark_user_id = @id LIMIT 1`,
     params: { id: larkUserId },
   });
-  return rows[0] || null;
+  return cacheUser(larkUserId, rows[0] || null);
 }
 
 /**

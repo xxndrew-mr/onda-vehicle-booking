@@ -92,6 +92,10 @@ export async function runDml(query, params) {
   const bigquery = getBigQuery();
   const [job] = await bigquery.createQueryJob({ query, params });
   await job.getQueryResults();
+  // Setelah getQueryResults, statistik job biasanya sudah ter-populate — pakai itu
+  // agar tidak menambah 1 round-trip getMetadata (mengurangi latensi tiap DML).
+  const cached = job.metadata?.statistics?.query?.numDmlAffectedRows;
+  if (cached !== undefined && cached !== null) return Number(cached);
   const [meta] = await job.getMetadata();
   return Number(meta.statistics?.query?.numDmlAffectedRows || 0);
 }

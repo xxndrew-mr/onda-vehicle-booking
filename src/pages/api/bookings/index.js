@@ -49,11 +49,16 @@ async function handler(req, res) {
         return res.status(400).json({ message: 'Durasi booking maksimal 7 hari.' });
       }
 
-      // Kendaraan harus berstatus tersedia (Ready) — status diatur GA di menu Armada.
-      const [vrows] = await bigquery.query({
-        query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
-        params: { vId: vehicle_id },
-      });
+      // Cek status kendaraan + profil pemohon PARALEL (dua query independen).
+      const [vehicleResult, requester] = await Promise.all([
+        bigquery.query({
+          query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+          params: { vId: vehicle_id },
+        }),
+        getUserByLarkId(req.user.sub),
+      ]);
+
+      const vrows = vehicleResult[0];
       if (vrows.length === 0) {
         return res.status(400).json({ message: 'Kendaraan tidak ditemukan.' });
       }
@@ -62,9 +67,6 @@ async function handler(req, res) {
           message: `Kendaraan sedang tidak tersedia (status: ${vrows[0].status || 'tidak diketahui'}).`,
         });
       }
-
-      // Approver dari struktur organisasi Lark (disinkron saat login).
-      const requester = await getUserByLarkId(req.user.sub);
       if (!requester) {
         return res.status(401).json({ message: 'Profil user tidak ditemukan. Silakan login ulang.' });
       }

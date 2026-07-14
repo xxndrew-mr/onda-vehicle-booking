@@ -1,18 +1,25 @@
 import '../styles/globals.css'
+import { useRouter } from 'next/router'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { AuthProvider } from '../components/AuthContext'
 
+// Halaman "berdiri sendiri" tanpa navbar/footer (keluar & error login).
+const BARE_PAGES = ['/keluar', '/auth-error']
+
 function MyApp({ Component, pageProps }) {
+  const { pathname } = useRouter()
+  const bare = BARE_PAGES.includes(pathname)
+
   return (
     <AuthProvider>
       <div className="flex flex-col min-h-screen bg-gray-50 text-gray-900">
-        <Navbar />
+        {!bare && <Navbar />}
         {/* Background & tinggi ditangani di sini; halaman cukup mengisi konten. */}
         <main className="flex-1">
           <Component {...pageProps} />
         </main>
-        <Footer />
+        {!bare && <Footer />}
       </div>
     </AuthProvider>
   )

@@ -1,16 +1,17 @@
 import getBigQuery from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
-import { getUserByLarkId } from '../../../lib/users';
 
 const DATASET = 'onda_booking_db';
 
 /**
  * Riwayat booking untuk halaman /riwayat:
  * - mine      : semua booking yang diajukan user login (semua status), terbaru dulu.
- * - processed : riwayat persetujuan — booking yang pernah DIPROSES user ini sebagai
- *               supervisor/GA (dicari dari kolom audit *_action_by yang berformat
- *               "Nama (open_id)"). ADMIN melihat seluruh riwayat persetujuan.
- *               Hanya diisi untuk supervisor/GA/ADMIN.
+ * - processed : booking yang pernah DIPROSES user ini sebagai supervisor/GA
+ *               (dicari dari kolom audit *_action_by berformat "Nama (open_id)").
+ *               ADMIN melihat seluruh riwayat persetujuan.
+ *
+ * Endpoint READ → role dari JWT (req.user), tanpa query users tambahan.
+ * Query mine & processed dijalankan paralel untuk menekan latensi.
  */
 async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -20,12 +21,7 @@ async function handler(req, res) {
 
   try {
     const bigquery = getBigQuery();
-
-    const me = await getUserByLarkId(req.user.sub);
-    if (!me) {
-      return res.status(401).json({ message: 'Profil user tidak ditemukan. Silakan login ulang.' });
-    }
-
+    const me = req.user; // { sub, role, is_supervisor }
     const isAdmin = me.role === 'ADMIN';
     const canApprove = isAdmin || me.role === 'GA' || !!me.is_supervisor;
 
@@ -36,33 +32,29 @@ async function handler(req, res) {
       FROM \`${DATASET}.bookings\` b
       LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id`;
 
-    const [mine] = await bigquery.query({
-      query: `${baseSelect}
-        WHERE b.requester_id = @me
-        ORDER BY b.created_at DESC`,
-      params: { me: me.lark_user_id },
+    const minePromise = bigquery.query({
+      query: `${baseSelect} WHERE b.requester_id = @me ORDER BY b.created_at DESC`,
+      params: { me: me.sub },
     });
 
-    let processed = [];
+    let processedPromise = Promise.resolve([[]]);
     if (canApprove) {
-      if (isAdmin) {
-        const [rows] = await bigquery.query(
-          `${baseSelect}
-           WHERE b.supervisor_action_at IS NOT NULL OR b.ga_action_at IS NOT NULL
-           ORDER BY COALESCE(b.ga_action_at, b.supervisor_action_at) DESC`
-        );
-        processed = rows;
-      } else {
-        const [rows] = await bigquery.query({
-          query: `${baseSelect}
-            WHERE STRPOS(IFNULL(b.supervisor_action_by, ''), @me) > 0
-               OR STRPOS(IFNULL(b.ga_action_by, ''), @me) > 0
-            ORDER BY COALESCE(b.ga_action_at, b.supervisor_action_at) DESC`,
-          params: { me: me.lark_user_id },
-        });
-        processed = rows;
-      }
+      processedPromise = isAdmin
+        ? bigquery.query(
+            `${baseSelect}
+             WHERE b.supervisor_action_at IS NOT NULL OR b.ga_action_at IS NOT NULL
+             ORDER BY COALESCE(b.ga_action_at, b.supervisor_action_at) DESC`
+          )
+        : bigquery.query({
+            query: `${baseSelect}
+              WHERE STRPOS(IFNULL(b.supervisor_action_by, ''), @me) > 0
+                 OR STRPOS(IFNULL(b.ga_action_by, ''), @me) > 0
+              ORDER BY COALESCE(b.ga_action_at, b.supervisor_action_at) DESC`,
+            params: { me: me.sub },
+          });
     }
+
+    const [[mine], [processed]] = await Promise.all([minePromise, processedPromise]);
 
     return res.status(200).json({ mine, processed, canApprove, isAdmin, role: me.role });
   } catch (error) {

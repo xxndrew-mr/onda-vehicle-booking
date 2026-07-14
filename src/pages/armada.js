@@ -38,15 +38,18 @@ export default function Armada() {
     if (isGa) fetchVehicles();
   }, [isGa, fetchVehicles]);
 
-  // Ubah status langsung dari tabel (efek instan ke ketersediaan booking).
+  // Ubah status langsung dari tabel (optimistic — efek instan; revert bila gagal).
   const changeStatus = async (v, status) => {
+    const prev = v.status;
+    setVehicles((list) => list.map((x) => (x.id === v.id ? { ...x, status } : x)));
+    setNotice(`Status ${v.name} diubah menjadi ${status}.`);
+    setErrorMsg('');
     try {
       await sendJson(`/api/vehicles/${v.id}`, 'PATCH', { status });
-      setNotice(`Status ${v.name} diubah menjadi ${status}.`);
-      fetchVehicles();
     } catch (e) {
       setNotice('');
       setErrorMsg(e.message);
+      setVehicles((list) => list.map((x) => (x.id === v.id ? { ...x, status: prev } : x)));
     }
   };
 

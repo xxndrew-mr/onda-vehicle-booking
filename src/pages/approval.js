@@ -175,14 +175,21 @@ export default function Approvals() {
   }, [fetchPending]);
 
   const handleAction = async (id, action, extra = {}) => {
+    // Optimistic: hapus kartu dari antrian seketika agar terasa instan.
+    setQueues((q) => ({
+      ...q,
+      supervisorQueue: q.supervisorQueue.filter((b) => b.id !== id),
+      gaQueue: q.gaQueue.filter((b) => b.id !== id),
+    }));
+    setErrorMsg('');
     try {
       const res = await sendJson(`/api/bookings/${id}`, 'PATCH', { action, ...extra });
       setActionMsg(res.message || 'Berhasil diproses.');
-      setErrorMsg('');
-      fetchPending();
     } catch (err) {
+      // Gagal → kembalikan tampilan agar sinkron dengan server.
       setActionMsg('');
       setErrorMsg(err.message);
+      fetchPending();
     }
   };
 

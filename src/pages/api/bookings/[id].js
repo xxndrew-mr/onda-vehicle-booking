@@ -35,20 +35,22 @@ async function handler(req, res) {
   try {
     const bigquery = getBigQuery();
 
-    // Role terkini dari DB (revocation near-real-time), bukan dari JWT yang bisa basi.
-    const me = await getUserByLarkId(req.user.sub);
+    // Role terkini dari DB (cache TTL pendek) + data booking dibaca PARALEL.
+    const [me, bookingResult] = await Promise.all([
+      getUserByLarkId(req.user.sub),
+      bigquery.query({
+        query: `SELECT status, supervisor_id, requester_id, vehicle_id, start_time, end_time
+                FROM \`${DATASET}.bookings\` WHERE id = @id`,
+        params: { id },
+      }),
+    ]);
+
     if (!me) {
       return res.status(401).json({ message: 'Profil user tidak ditemukan. Silakan login ulang.' });
     }
     const isAdmin = me.role === 'ADMIN';
     const actor = `${me.name} (${me.lark_user_id})`;
-
-    // Ambil booking saat ini (termasuk kendaraan & jadwal untuk pergantian armada)
-    const [rows] = await bigquery.query({
-      query: `SELECT status, supervisor_id, requester_id, vehicle_id, start_time, end_time
-              FROM \`${DATASET}.bookings\` WHERE id = @id`,
-      params: { id },
-    });
+    const rows = bookingResult[0];
 
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Booking tidak ditemukan' });
@@ -86,47 +88,50 @@ async function handler(req, res) {
       const wantsSwap = new_vehicle_id && new_vehicle_id !== booking.vehicle_id;
 
       if (wantsSwap) {
+        // Alasan pergantian WAJIB (cek murah dulu sebelum query).
+        if (!reason || !String(reason).trim()) {
+          return res.status(400).json({ message: 'Alasan pergantian kendaraan wajib diisi.' });
+        }
+
+        // Tiga validasi query dijalankan PARALEL: status kendaraan asli,
+        // status kendaraan pengganti, dan cek bentrok pengganti.
+        const [[cur], [nv], [conf]] = await Promise.all([
+          bigquery.query({
+            query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+            params: { vId: booking.vehicle_id },
+          }),
+          bigquery.query({
+            query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+            params: { vId: new_vehicle_id },
+          }),
+          bigquery.query({
+            query: `SELECT id FROM \`${DATASET}.bookings\`
+                    WHERE vehicle_id = @nv AND id != @id
+                      AND status NOT LIKE 'Rejected%' AND status NOT LIKE 'Cancelled%'
+                      AND start_time < TIMESTAMP(@end) AND end_time > TIMESTAMP(@start)`,
+            params: {
+              nv: new_vehicle_id,
+              id,
+              start: booking.start_time.value,
+              end: booking.end_time.value,
+            },
+          }),
+        ]);
+
         // 1. Hanya boleh ganti bila kendaraan asli BERMASALAH (status != Ready).
-        const [cur] = await bigquery.query({
-          query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
-          params: { vId: booking.vehicle_id },
-        });
         if (cur.length > 0 && isVehicleAvailable(cur[0].status)) {
           return res.status(400).json({
             message: 'Kendaraan yang diajukan tidak bermasalah — tidak boleh diganti. Ubah status kendaraan di menu Armada bila memang ada kendala.',
           });
         }
-
-        // 2. Alasan pergantian WAJIB.
-        if (!reason || !String(reason).trim()) {
-          return res.status(400).json({ message: 'Alasan pergantian kendaraan wajib diisi.' });
-        }
-
-        // 3. Kendaraan pengganti harus ada dan 'Ready'.
-        const [nv] = await bigquery.query({
-          query: `SELECT status FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
-          params: { vId: new_vehicle_id },
-        });
+        // 2. Kendaraan pengganti harus ada dan 'Ready'.
         if (nv.length === 0) {
           return res.status(400).json({ message: 'Kendaraan pengganti tidak ditemukan.' });
         }
         if (!isVehicleAvailable(nv[0].status)) {
           return res.status(409).json({ message: 'Kendaraan pengganti sedang tidak tersedia.' });
         }
-
-        // 4. Kendaraan pengganti tidak boleh bentrok di jendela waktu booking.
-        const [conf] = await bigquery.query({
-          query: `SELECT id FROM \`${DATASET}.bookings\`
-                  WHERE vehicle_id = @nv AND id != @id
-                    AND status NOT LIKE 'Rejected%' AND status NOT LIKE 'Cancelled%'
-                    AND start_time < TIMESTAMP(@end) AND end_time > TIMESTAMP(@start)`,
-          params: {
-            nv: new_vehicle_id,
-            id,
-            start: booking.start_time.value,
-            end: booking.end_time.value,
-          },
-        });
+        // 3. Kendaraan pengganti tidak boleh bentrok di jendela waktu booking.
         if (conf.length > 0) {
           return res.status(409).json({ message: 'Kendaraan pengganti sudah dipesan pada jam tersebut.' });
         }

@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const AuthContext = createContext({ user: null, loading: true });
 
 // Halaman publik yang tidak boleh memicu auto-login (mencegah loop redirect).
-const PUBLIC_PATHS = ['/auth-error'];
+const PUBLIC_PATHS = ['/auth-error', '/keluar'];
 
 /**
  * Muat identitas user dari session (/api/auth/me). Halaman sudah diproteksi

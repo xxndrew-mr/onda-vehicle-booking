@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Car, CalendarDays, ClipboardCheck, Truck, History, LogOut, User } from 'lucide-react';
@@ -15,6 +16,8 @@ const ROLE_LABELS = {
 export default function Navbar() {
   const { pathname } = useRouter();
   const { user } = useAuth();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // Menu Approval hanya untuk yang benar-benar bisa menyetujui:
   // supervisor (leader divisi di Lark / punya bawahan) atau GA/Admin.
@@ -32,13 +35,21 @@ export default function Navbar() {
     // { href: '/security', label: 'Security', icon: ShieldCheck, show: true },
   ].filter((l) => l.show);
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/';
+  const doLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // abaikan — tetap arahkan ke halaman keluar
+    }
+    // assign() selalu navigasi (beda dari href ke URL yang sama);
+    // /keluar dikecualikan dari proxy & auto-login sehingga tidak masuk lagi otomatis.
+    window.location.assign('/keluar');
   };
 
   return (
-    // Floating: menempel di atas (sticky) dengan jarak dari tepi + pill melayang.
+    <>
+    {/* Floating: menempel di atas (sticky) dengan jarak dari tepi + pill melayang. */}
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
       <nav className="max-w-6xl mx-auto bg-blue-900/90 backdrop-blur-md text-white rounded-2xl shadow-lg shadow-blue-900/20 ring-1 ring-white/10">
         <div className="px-4 sm:px-5 h-14 flex items-center justify-between gap-3">
@@ -81,11 +92,12 @@ export default function Navbar() {
                   </div>
                 </div>
                 <button
-                  onClick={handleLogout}
-                  title="Reset session"
-                  className="ml-1 p-2 rounded-full hover:bg-white/10 transition"
+                  onClick={() => setConfirmOpen(true)}
+                  title="Keluar"
+                  className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition text-sm"
                 >
                   <LogOut size={16} />
+                  <span className="hidden sm:inline">Keluar</span>
                 </button>
               </div>
             )}
@@ -93,5 +105,39 @@ export default function Navbar() {
         </div>
       </nav>
     </header>
+
+    {/* Konfirmasi keluar — muncul SEKETIKA saat tombol ditekan (feedback instan). */}
+    {confirmOpen && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-[60]">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-gray-800">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="grid place-items-center w-10 h-10 rounded-full bg-red-50 text-red-600 shrink-0">
+              <LogOut size={20} />
+            </span>
+            <h2 className="text-lg font-bold">Keluar dari aplikasi?</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-5">
+            Session Anda akan diakhiri. Untuk masuk kembali, Anda perlu login ulang lewat Lark.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setConfirmOpen(false)}
+              disabled={loggingOut}
+              className="px-4 py-2 rounded-md border text-gray-700 hover:bg-gray-50 transition"
+            >
+              Batal
+            </button>
+            <button
+              onClick={doLogout}
+              disabled={loggingOut}
+              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-60"
+            >
+              {loggingOut ? 'Keluar…' : 'Ya, Keluar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
