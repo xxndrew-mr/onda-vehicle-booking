@@ -3,6 +3,7 @@ import { Truck, Plus, Pencil } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
 import Toast from '../components/Toast';
+import Pagination, { usePagination } from '../components/Pagination';
 import { VEHICLE_STATUSES, VEHICLE_STATUS_META, vehicleSpecText } from '../lib/vehicleStatus';
 
 function StatusBadge({ status }) {
@@ -33,6 +34,7 @@ export default function Armada() {
   const [toast, setToast] = useState({ message: '', type: 'success' });
   const [form, setForm] = useState(null); // null | emptyForm(tambah) | vehicle(edit)
   const [saving, setSaving] = useState(false);
+  const veh = usePagination(vehicles, 10);
 
   const fetchVehicles = useCallback(() => {
     getJson('/api/vehicles')
@@ -154,7 +156,7 @@ export default function Armada() {
                 </tr>
               </thead>
               <tbody>
-                {vehicles.map((v) => (
+                {veh.pageItems.map((v) => (
                   <tr key={v.id} className="border-b last:border-0 align-top">
                     <td className="py-3 pr-4">
                       <div className="font-medium text-gray-800">{v.name}</div>
@@ -187,6 +189,7 @@ export default function Armada() {
               </tbody>
             </table>
           )}
+          <Pagination page={veh.page} totalPages={veh.totalPages} total={veh.total} onChange={veh.setPage} />
         </div>
 
         <p className="text-xs text-gray-400 mt-3">

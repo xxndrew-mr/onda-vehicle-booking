@@ -5,6 +5,7 @@ import { StatusBadge, AuditLine, vehicleChangeNote, actorName, actorId, ACTIVE_S
 import Avatar from '../components/Avatar';
 import Person from '../components/Person';
 import Toast from '../components/Toast';
+import Pagination, { usePagination } from '../components/Pagination';
 
 /**
  * Aksi yang tercatat pada sebuah booking (untuk tab Riwayat Persetujuan).
@@ -39,6 +40,8 @@ export default function Riwayat() {
   const [tab, setTab] = useState('mine');
   const [errorMsg, setErrorMsg] = useState('');
   const [toast, setToast] = useState({ message: '', type: 'success' });
+  const minePage = usePagination(data.mine, 10);
+  const procPage = usePagination(data.processed, 10);
 
   const fetchHistory = useCallback(() => {
     getJson('/api/bookings/history')
@@ -123,7 +126,7 @@ export default function Riwayat() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.mine.map((b) => (
+                    {minePage.pageItems.map((b) => (
                       <tr key={b.id} className="border-b last:border-0 align-top">
                         <td className="py-3 pr-4">
                           <div className="font-medium text-gray-800">{b.vehicle_name}</div>
@@ -164,6 +167,7 @@ export default function Riwayat() {
                 </table>
               </div>
             )}
+            <Pagination page={minePage.page} totalPages={minePage.totalPages} total={minePage.total} onChange={minePage.setPage} />
           </div>
         )}
 
@@ -192,7 +196,7 @@ export default function Riwayat() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.processed.map((b) => (
+                    {procPage.pageItems.map((b) => (
                       <tr key={b.id} className="border-b last:border-0 align-top">
                         <td className="py-3 pr-4">
                           <div className="font-medium text-gray-800">{b.vehicle_name}</div>
@@ -247,6 +251,7 @@ export default function Riwayat() {
                 </table>
               </div>
             )}
+            <Pagination page={procPage.page} totalPages={procPage.totalPages} total={procPage.total} onChange={procPage.setPage} />
           </div>
         )}
       </div>

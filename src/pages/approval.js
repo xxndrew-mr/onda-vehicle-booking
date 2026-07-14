@@ -5,6 +5,7 @@ import { isVehicleAvailable, VEHICLE_STATUS_META } from '../lib/vehicleStatus';
 import Avatar from '../components/Avatar';
 import Person from '../components/Person';
 import Toast from '../components/Toast';
+import Pagination, { usePagination } from '../components/Pagination';
 
 const fmt = (t) => (t?.value ? new Date(t.value).toLocaleString('id-ID') : '-');
 
@@ -195,6 +196,9 @@ export default function Approvals() {
     }
   };
 
+  const supPage = usePagination(queues.supervisorQueue, 10);
+  const gaPage = usePagination(queues.gaQueue, 10);
+
   const isAdmin = queues.role === 'ADMIN';
   const isGa = queues.role === 'GA' || isAdmin;
   // Seksi supervisor hanya untuk supervisor (leader di Lark) / admin / bila ada antrian.
@@ -240,7 +244,7 @@ export default function Approvals() {
             </div>
           ) : (
             <div className="space-y-4">
-              {queues.supervisorQueue.map((item) => (
+              {supPage.pageItems.map((item) => (
                 <SupervisorCard
                   key={item.id}
                   item={item}
@@ -263,6 +267,7 @@ export default function Approvals() {
               ))}
             </div>
           )}
+          <Pagination page={supPage.page} totalPages={supPage.totalPages} total={supPage.total} onChange={supPage.setPage} />
         </section>
         )}
 
@@ -277,7 +282,7 @@ export default function Approvals() {
               </div>
             ) : (
               <div className="space-y-4">
-                {queues.gaQueue.map((item) => (
+                {gaPage.pageItems.map((item) => (
                   <GaCard
                     key={item.id}
                     item={item}
@@ -297,6 +302,7 @@ export default function Approvals() {
                 ))}
               </div>
             )}
+            <Pagination page={gaPage.page} totalPages={gaPage.totalPages} total={gaPage.total} onChange={gaPage.setPage} />
           </section>
         )}
 
