@@ -214,7 +214,13 @@ async function buildProfileFromOpenId(openId, tenantToken, info = null) {
     leader_name: leaderName,
     role,
     is_supervisor: isDepartmentLeader,
-    avatar_url: info?.avatar_url || contact.avatar?.avatar_240 || '',
+    // Konsisten pakai 240px dari Contact API (selalu tersedia) supaya crisp di UI.
+    avatar_url:
+      contact.avatar?.avatar_240 ||
+      contact.avatar?.avatar_72 ||
+      info?.avatar_middle ||
+      info?.avatar_url ||
+      '',
   };
 }
 

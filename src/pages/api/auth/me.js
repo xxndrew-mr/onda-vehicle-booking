@@ -15,6 +15,7 @@ async function handler(req, res) {
       role: req.user.role,
       is_supervisor: req.user.is_supervisor,
       department: req.user.department || '',
+      avatar: req.user.avatar || '',
     },
   });
 }

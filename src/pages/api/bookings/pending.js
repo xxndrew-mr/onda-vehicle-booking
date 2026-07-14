@@ -29,9 +29,11 @@ async function handler(req, res) {
       SELECT b.*,
              COALESCE(v.name, 'Kendaraan tidak dikenal') AS vehicle_name,
              v.license_plate,
-             v.status AS vehicle_status
+             v.status AS vehicle_status,
+             u.avatar_url AS requester_avatar
       FROM \`${DATASET}.bookings\` b
-      LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id`;
+      LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id
+      LEFT JOIN \`${DATASET}.users\` u ON b.requester_id = u.lark_user_id`;
 
     // supervisorQueue: ADMIN melihat SEMUA tahap supervisor; user lain hanya miliknya.
     const supervisorPromise = isAdmin

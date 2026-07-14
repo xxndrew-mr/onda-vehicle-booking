@@ -28,9 +28,11 @@ async function handler(req, res) {
     const baseSelect = `
       SELECT b.*,
              COALESCE(v.name, 'Kendaraan tidak dikenal') AS vehicle_name,
-             v.license_plate
+             v.license_plate,
+             u.avatar_url AS requester_avatar
       FROM \`${DATASET}.bookings\` b
-      LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id`;
+      LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id
+      LEFT JOIN \`${DATASET}.users\` u ON b.requester_id = u.lark_user_id`;
 
     const minePromise = bigquery.query({
       query: `${baseSelect} WHERE b.requester_id = @me ORDER BY b.created_at DESC`,

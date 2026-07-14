@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { History, ClipboardCheck, Check, X } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { StatusBadge, auditInfo, vehicleChangeNote, actorName, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
+import Avatar from '../components/Avatar';
 
 /**
  * Aksi yang tercatat pada sebuah booking (untuk tab Riwayat Persetujuan).
@@ -200,12 +201,17 @@ export default function Riwayat() {
                           )}
                         </td>
                         <td className="py-3 pr-4">
-                          <div className="text-gray-700">{b.user_name}</div>
-                          {b.requester_department && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                              {b.requester_department}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <Avatar src={b.requester_avatar} name={b.user_name} size={28} />
+                            <div>
+                              <div className="text-gray-700">{b.user_name}</div>
+                              {b.requester_department && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                  {b.requester_department}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </td>
                         <td className="py-3 pr-4 whitespace-nowrap text-gray-600">
                           {fmtTs(b.start_time)}

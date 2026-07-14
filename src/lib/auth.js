@@ -31,6 +31,7 @@ export async function createSessionToken(user) {
     role: user.role,
     is_supervisor: !!user.is_supervisor,
     department,
+    avatar: user.avatar_url || '',
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

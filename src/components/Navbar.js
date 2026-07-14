@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Car, CalendarDays, ClipboardCheck, Truck, History, RotateCcw, User } from 'lucide-react';
+import { Car, CalendarDays, ClipboardCheck, Truck, History, RotateCcw } from 'lucide-react';
 // ShieldCheck (menu Security) dinonaktifkan sementara — lihat link di bawah.
 import { useAuth } from './AuthContext';
+import Avatar from './Avatar';
 
 const ROLE_LABELS = {
   ADMIN: 'Administrator',
@@ -90,9 +91,7 @@ export default function Navbar() {
                   {user.department ? ` · ${user.department}` : ''}
                 </div>
               </div>
-              <span className="grid place-items-center w-8 h-8 rounded-full bg-white/10 shrink-0">
-                <User size={16} />
-              </span>
+              <Avatar src={user.avatar} name={user.name} size={32} className="ring-2 ring-white/20" />
               <button
                 onClick={resetSession}
                 disabled={resetting}

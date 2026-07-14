@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, X, Car, User, UserCheck, Building2, AlertTriangle } from 'lucide-react';
+import { Check, X, Car, UserCheck, Building2, AlertTriangle } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { isVehicleAvailable, VEHICLE_STATUS_META } from '../lib/vehicleStatus';
+import Avatar from '../components/Avatar';
 
 const fmt = (t) => (t?.value ? new Date(t.value).toLocaleString('id-ID') : '-');
 
 function RequesterLine({ item }) {
   return (
     <div className="flex items-center gap-2 text-gray-600">
-      <User size={16} /> {item.user_name}
+      <Avatar src={item.requester_avatar} name={item.user_name} size={24} />
+      {item.user_name}
       {item.requester_department && (
         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
           {item.requester_department}
