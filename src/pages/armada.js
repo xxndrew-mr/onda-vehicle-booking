@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Truck, Plus, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
 import Toast from '../components/Toast';
 import Pagination, { usePagination } from '../components/Pagination';
 import PageHeader from '../components/PageHeader';
+import Button from '../components/Button';
+import Reveal from '../components/Reveal';
 import { VEHICLE_STATUSES, VEHICLE_STATUS_META, vehicleSpecText } from '../lib/vehicleStatus';
 
 function StatusBadge({ status }) {
-  const meta = VEHICLE_STATUS_META[status] || { label: status || '-', cls: 'bg-gray-100 text-gray-600' };
-  return (
-    <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${meta.cls}`}>
-      {meta.label}
-    </span>
-  );
+  const meta = VEHICLE_STATUS_META[status] || { label: status || '-', cls: 'badge' };
+  return <span className={meta.cls}>{meta.label}</span>;
 }
 
 const emptyForm = {
@@ -100,125 +98,120 @@ export default function Armada() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-400">Memuat…</div>;
+    return <div className="p-16 text-center mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">Memuat…</div>;
   }
 
   if (!isGa) {
     return (
       <div className="p-8 min-h-[60vh] flex items-center justify-center">
-        <div className="text-center text-gray-500">
-          <p className="text-lg font-semibold">Akses ditolak</p>
-          <p className="text-sm mt-1">Hanya General Affairs yang bisa mengelola armada.</p>
+        <div className="text-center">
+          <p className="font-display text-3xl text-[var(--ink)]">Akses ditolak</p>
+          <p className="text-sm mt-2 text-[var(--muted)]">Hanya General Affairs yang bisa mengelola armada.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 sm:p-8">
-      <div className="max-w-5xl mx-auto">
-        <PageHeader
-          icon={Truck}
-          title="Manajemen Armada"
-          subtitle="Kelola kendaraan, status, dan informasinya."
-          right={
-            <button
-              onClick={() => { setForm({ ...emptyForm }); setErrorMsg(''); }}
-              className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition shadow-sm"
-            >
-              <Plus size={18} /> Tambah Kendaraan
-            </button>
-          }
-        />
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-4">
+      <PageHeader
+        eyebrow="Armada"
+        title="Manajemen Armada"
+        subtitle="Kelola kendaraan, status, dan informasinya."
+        right={
+          <Button variant="primary" arrow onClick={() => { setForm({ ...emptyForm }); setErrorMsg(''); }}>
+            Tambah Kendaraan
+          </Button>
+        }
+      />
 
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ message: '', type: 'success' })}
-        />
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: '', type: 'success' })}
+      />
 
-        {errorMsg && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg">
-            <span className="font-semibold">Gagal:</span> {errorMsg}
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-6 overflow-x-auto">
-          {vehicles.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-8">Belum ada kendaraan.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 border-b">
-                  <th className="py-2 pr-4 font-medium">Nama</th>
-                  <th className="py-2 pr-4 font-medium">Plat Nomor</th>
-                  <th className="py-2 pr-4 font-medium">Info</th>
-                  <th className="py-2 pr-4 font-medium">Status</th>
-                  <th className="py-2 pr-4 font-medium">Ubah Status</th>
-                  <th className="py-2 font-medium text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {veh.pageItems.map((v) => (
-                  <tr key={v.id} className="border-b last:border-0 align-top hover:bg-gray-50/70 transition-colors">
-                    <td className="py-3 pr-4">
-                      <div className="font-medium text-gray-800">{v.name}</div>
-                      {v.notes && <div className="text-xs text-gray-400 max-w-[14rem] truncate" title={v.notes}>{v.notes}</div>}
-                    </td>
-                    <td className="py-3 pr-4 text-gray-600">{v.license_plate || '—'}</td>
-                    <td className="py-3 pr-4 text-gray-600">{vehicleSpecText(v) || '—'}</td>
-                    <td className="py-3 pr-4"><StatusBadge status={v.status} /></td>
-                    <td className="py-3 pr-4">
-                      <select
-                        value={v.status || 'Ready'}
-                        onChange={(e) => changeStatus(v, e.target.value)}
-                        className="p-1.5 border rounded text-sm"
-                      >
-                        {VEHICLE_STATUSES.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="py-3 text-right">
-                      <button
-                        onClick={() => { setForm({ ...v }); setErrorMsg(''); }}
-                        className="inline-flex items-center gap-1 text-blue-700 hover:underline text-xs font-medium"
-                      >
-                        <Pencil size={14} /> Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <Pagination page={veh.page} totalPages={veh.totalPages} total={veh.total} onChange={veh.setPage} />
+      {errorMsg && (
+        <div className="mb-4 p-4 rounded-[var(--radius)] border border-[var(--danger-line)] bg-[var(--danger-wash)] text-[var(--danger)] text-sm">
+          {errorMsg}
         </div>
+      )}
 
-        <p className="text-xs text-gray-400 mt-3">
-          Hanya kendaraan berstatus <span className="font-semibold">Ready</span> yang bisa dipesan pada halaman Booking.
-        </p>
-      </div>
+      <Reveal className="panel p-4 sm:p-6 overflow-x-auto">
+        {vehicles.length === 0 ? (
+          <p className="text-sm text-[var(--muted)] text-center py-10">Belum ada kendaraan.</p>
+        ) : (
+          <table className="w-full text-sm data-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Plat Nomor</th>
+                <th>Info</th>
+                <th>Status</th>
+                <th>Ubah Status</th>
+                <th className="text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {veh.pageItems.map((v) => (
+                <tr key={v.id}>
+                  <td>
+                    <div className="font-medium text-[var(--ink)]">{v.name}</div>
+                    {v.notes && <div className="text-xs text-[var(--muted)] max-w-[14rem] truncate" title={v.notes}>{v.notes}</div>}
+                  </td>
+                  <td className="text-[var(--ink-2)] num">{v.license_plate || '—'}</td>
+                  <td className="text-[var(--ink-2)]">{vehicleSpecText(v) || '—'}</td>
+                  <td><StatusBadge status={v.status} /></td>
+                  <td>
+                    <select
+                      value={v.status || 'Ready'}
+                      onChange={(e) => changeStatus(v, e.target.value)}
+                      className="field text-sm !min-h-0 py-1.5 max-w-[10rem]"
+                    >
+                      {VEHICLE_STATUSES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="text-right">
+                    <button
+                      onClick={() => { setForm({ ...v }); setErrorMsg(''); }}
+                      className="inline-flex items-center gap-1 text-[var(--blue)] hover:underline mono text-[11px] uppercase tracking-[0.1em] font-bold"
+                    >
+                      <Pencil size={13} /> Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <Pagination page={veh.page} totalPages={veh.totalPages} total={veh.total} onChange={veh.setPage} />
+      </Reveal>
+
+      <p className="mono text-[11px] uppercase tracking-[0.1em] text-[var(--muted)] mt-4">
+        Hanya kendaraan berstatus <span className="text-[var(--blue)]">Ready</span> yang bisa dipesan pada halaman Booking.
+      </p>
 
       {form && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-bold text-blue-900 mb-4">
+        <div className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="panel w-full max-w-md p-6">
+            <h2 className="font-display text-2xl text-[var(--ink)] mb-5">
               {form.id ? 'Edit Kendaraan' : 'Tambah Kendaraan'}
             </h2>
 
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Kendaraan</label>
+            <label className="label block mb-1.5">Nama Kendaraan</label>
             <input
-              className="w-full border rounded-md p-2 mb-3 text-sm"
+              className="field mb-4 text-sm"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Contoh: Toyota Avanza"
               autoFocus
             />
 
-            <label className="block text-sm font-medium text-gray-700 mb-1">Plat Nomor</label>
+            <label className="label block mb-1.5">Plat Nomor</label>
             <input
-              className="w-full border rounded-md p-2 mb-3 text-sm"
+              className="field mb-4 text-sm"
               value={form.license_plate}
               onChange={(e) => setForm({ ...form, license_plate: e.target.value })}
               placeholder="Contoh: B 1234 OMI"
@@ -226,20 +219,20 @@ export default function Armada() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kapasitas (orang)</label>
+                <label className="label block mb-1.5">Kapasitas (orang)</label>
                 <input
                   type="number"
                   min="0"
-                  className="w-full border rounded-md p-2 mb-3 text-sm"
+                  className="field mb-4 text-sm"
                   value={form.capacity}
                   onChange={(e) => setForm({ ...form, capacity: e.target.value })}
                   placeholder="Contoh: 6"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bahan Bakar</label>
+                <label className="label block mb-1.5">Bahan Bakar</label>
                 <input
-                  className="w-full border rounded-md p-2 mb-3 text-sm"
+                  className="field mb-4 text-sm"
                   value={form.fuel_type}
                   onChange={(e) => setForm({ ...form, fuel_type: e.target.value })}
                   placeholder="Bensin / Solar / Listrik"
@@ -247,9 +240,9 @@ export default function Armada() {
               </div>
             </div>
 
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="label block mb-1.5">Status</label>
             <select
-              className="w-full border rounded-md p-2 mb-3 text-sm"
+              className="field mb-4 text-sm"
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
             >
@@ -258,9 +251,9 @@ export default function Armada() {
               ))}
             </select>
 
-            <label className="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+            <label className="label block mb-1.5">Catatan</label>
             <textarea
-              className="w-full border rounded-md p-2 mb-4 text-sm"
+              className="field mb-5 text-sm"
               rows={2}
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -268,20 +261,10 @@ export default function Armada() {
             />
 
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setForm(null)}
-                disabled={saving}
-                className="px-4 py-2 rounded-md border text-gray-700 hover:bg-gray-50 transition"
-              >
-                Batal
-              </button>
-              <button
-                onClick={saveForm}
-                disabled={saving || !form.name.trim()}
-                className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-800 transition disabled:opacity-50"
-              >
-                {saving ? 'Menyimpan…' : 'Simpan'}
-              </button>
+              <Button variant="ghost" onClick={() => setForm(null)} disabled={saving}>Batal</Button>
+              <Button variant="primary" arrow onClick={saveForm} disabled={saving || !form.name.trim()}>
+                {saving ? 'Menyimpan' : 'Simpan'}
+              </Button>
             </div>
           </div>
         </div>

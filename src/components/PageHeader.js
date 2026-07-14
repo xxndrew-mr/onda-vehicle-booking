@@ -1,22 +1,23 @@
+import Reveal from './Reveal';
+import { Eyebrow } from './Eyebrow';
+
 /**
- * Header halaman konsisten: chip ikon biru + judul + subjudul opsional,
- * dengan slot kanan (mis. tombol aksi).
+ * Header halaman editorial: eyebrow mono + judul display besar + subjudul,
+ * dengan slot kanan (mis. tombol aksi). Reveal saat masuk viewport.
  */
-export default function PageHeader({ icon: Icon, title, subtitle, right }) {
+export default function PageHeader({ eyebrow, title, subtitle, right }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-      <div className="flex items-center gap-3">
-        {Icon && (
-          <span className="grid place-items-center w-11 h-11 rounded-xl bg-blue-50 text-blue-700 shrink-0">
-            <Icon size={22} />
-          </span>
+    <Reveal className="flex flex-wrap items-end justify-between gap-6 mb-10 sm:mb-12">
+      <div className="min-w-0">
+        {eyebrow && <Eyebrow className="mb-4">{eyebrow}</Eyebrow>}
+        <h1 className="page-title">{title}</h1>
+        {subtitle && (
+          <p className="mt-3 max-w-xl text-[var(--ink-2)] text-sm sm:text-[15px] leading-relaxed">
+            {subtitle}
+          </p>
         )}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 leading-tight">{title}</h1>
-          {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
-        </div>
       </div>
-      {right}
-    </div>
+      {right && <div className="shrink-0">{right}</div>}
+    </Reveal>
   );
 }

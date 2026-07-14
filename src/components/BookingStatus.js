@@ -3,23 +3,19 @@ import Person from './Person';
 
 export const ACTIVE_STATUSES = ['Pending Supervisor', 'Pending GA', 'Approved'];
 
-// Label + warna badge per status.
+// Label + varian badge per status. Palet: biru (disetujui) · danger (ditolak) · monokrom.
 export const STATUS_META = {
-  'Pending Supervisor': { label: 'Menunggu Supervisor', cls: 'bg-yellow-100 text-yellow-800' },
-  'Pending GA': { label: 'Menunggu GA', cls: 'bg-yellow-100 text-yellow-800' },
-  Approved: { label: 'Disetujui', cls: 'bg-green-100 text-green-700' },
-  'Rejected By Supervisor': { label: 'Ditolak Supervisor', cls: 'bg-red-100 text-red-700' },
-  'Rejected By GA': { label: 'Ditolak GA', cls: 'bg-red-100 text-red-700' },
-  'Cancelled By User': { label: 'Dibatalkan', cls: 'bg-gray-200 text-gray-600' },
+  'Pending Supervisor': { label: 'Menunggu Supervisor', cls: 'badge' },
+  'Pending GA': { label: 'Menunggu GA', cls: 'badge' },
+  Approved: { label: 'Disetujui', cls: 'badge badge--blue' },
+  'Rejected By Supervisor': { label: 'Ditolak Supervisor', cls: 'badge badge--danger' },
+  'Rejected By GA': { label: 'Ditolak GA', cls: 'badge badge--danger' },
+  'Cancelled By User': { label: 'Dibatalkan', cls: 'badge' },
 };
 
 export function StatusBadge({ status }) {
-  const meta = STATUS_META[status] || { label: status, cls: 'bg-gray-100 text-gray-600' };
-  return (
-    <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${meta.cls}`}>
-      {meta.label}
-    </span>
-  );
+  const meta = STATUS_META[status] || { label: status, cls: 'badge' };
+  return <span className={meta.cls}>{meta.label}</span>;
 }
 
 // Audit "Name (ou_xxx)" → "Name" untuk tampilan.

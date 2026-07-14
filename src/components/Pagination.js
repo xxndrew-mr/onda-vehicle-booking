@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 /**
  * Pagination client-side. Kembalikan potongan halaman + kontrol.
- * clampedPage menjaga halaman tetap valid saat jumlah item menyusut (mis. setelah aksi).
+ * clampedPage menjaga halaman tetap valid saat jumlah item menyusut.
  */
 export function usePagination(items, pageSize = 10) {
   const [page, setPage] = useState(1);
@@ -20,18 +20,18 @@ export function usePagination(items, pageSize = 10) {
 export default function Pagination({ page, totalPages, total, onChange }) {
   if (totalPages <= 1) return null;
   const btn =
-    'inline-flex items-center gap-1 px-3 py-1.5 rounded-md border text-sm transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50';
+    'inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-[var(--line)] mono text-[11px] uppercase tracking-[0.12em] text-[var(--ink-2)] transition-colors hover:border-[var(--ink)] hover:text-[var(--ink)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[var(--line)] disabled:hover:text-[var(--ink-2)]';
   return (
-    <div className="flex items-center justify-between mt-4 text-sm">
-      <span className="text-gray-500">
-        Halaman {page} dari {totalPages} · {total} data
+    <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--line)]">
+      <span className="mono text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">
+        Hal {page}/{totalPages} · {total} data
       </span>
       <div className="flex gap-2">
         <button className={btn} disabled={page <= 1} onClick={() => onChange(page - 1)}>
-          <ChevronLeft size={16} /> Sebelumnya
+          <ArrowLeft size={14} /> Prev
         </button>
         <button className={btn} disabled={page >= totalPages} onClick={() => onChange(page + 1)}>
-          Berikutnya <ChevronRight size={16} />
+          Next <ArrowRight size={14} />
         </button>
       </div>
     </div>

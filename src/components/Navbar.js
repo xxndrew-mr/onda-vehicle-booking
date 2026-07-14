@@ -50,16 +50,16 @@ export default function Navbar() {
 
   return (
     <>
-    {/* Floating: menempel di atas (sticky) dengan jarak dari tepi + pill melayang. */}
+    {/* Floating: menempel di atas (sticky), pill putih dengan hairline. */}
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
-      <nav className="max-w-6xl mx-auto bg-blue-900/90 backdrop-blur-md text-white rounded-2xl shadow-lg shadow-blue-900/20 ring-1 ring-white/10">
-        <div className="px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
+      <nav className="max-w-6xl mx-auto bg-[var(--paper)]/85 backdrop-blur-md border border-[var(--line)] rounded-[var(--radius)] shadow-[0_16px_40px_-26px_rgba(11,16,32,0.4)]">
+        <div className="px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
           {/* Brand */}
-          <Link href="/" className="flex items-center gap-2 font-bold shrink-0">
-            <span className="grid place-items-center w-8 h-8 rounded-xl bg-white/10">
-              <Car size={18} />
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <span className="grid place-items-center w-8 h-8 rounded-lg bg-[var(--blue)] text-white">
+              <Car size={17} />
             </span>
-            <span className="hidden lg:inline whitespace-nowrap">Car Booking</span>
+            <span className="hidden lg:block font-display text-[18px] text-[var(--ink)]">Car Booking</span>
           </Link>
 
           {/* Menu */}
@@ -69,13 +69,13 @@ export default function Navbar() {
                 key={href}
                 href={href}
                 title={label}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full mono text-[11px] uppercase tracking-[0.12em] transition-colors ${
                   pathname === href
-                    ? 'bg-white text-blue-900 font-semibold shadow-sm'
-                    : 'hover:bg-white/10'
+                    ? 'bg-[var(--blue-wash)] text-[var(--blue)]'
+                    : 'text-[var(--ink-2)] hover:text-[var(--ink)]'
                 }`}
               >
-                <Icon size={16} />
+                <Icon size={15} />
                 <span className="hidden md:inline">{label}</span>
               </Link>
             ))}
@@ -83,20 +83,20 @@ export default function Navbar() {
 
           {/* User + Reset */}
           {user && (
-            <div className="flex items-center gap-2 shrink-0 pl-2 border-l border-white/15">
+            <div className="flex items-center gap-2.5 shrink-0 pl-2 sm:pl-3 border-l border-[var(--line)]">
               <div className="text-right leading-tight hidden md:block max-w-[9rem]">
-                <div className="text-sm font-semibold truncate">{user.name}</div>
-                <div className="text-[11px] text-blue-200 truncate">
+                <div className="text-sm font-medium text-[var(--ink)] truncate">{user.name}</div>
+                <div className="mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)] truncate">
                   {ROLE_LABELS[user.role] || user.role}
                   {user.department ? ` · ${user.department}` : ''}
                 </div>
               </div>
-              <Avatar src={user.avatar} name={user.name} size={32} className="ring-2 ring-white/20" />
+              <Avatar src={user.avatar} name={user.name} size={34} className="ring-1 ring-[var(--line)]" />
               <button
                 onClick={resetSession}
                 disabled={resetting}
                 title="Reset Session — ambil ulang data terbaru dari Lark"
-                className="grid place-items-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition disabled:opacity-60 shrink-0"
+                className="grid place-items-center w-9 h-9 rounded-full border border-[var(--line)] text-[var(--ink-2)] hover:border-[var(--ink)] hover:text-[var(--ink)] transition disabled:opacity-60 shrink-0"
               >
                 <RotateCcw size={15} className={resetting ? 'animate-spin' : ''} />
               </button>
@@ -108,11 +108,11 @@ export default function Navbar() {
 
     {/* Overlay loading — muncul SEKETIKA saat Reset Session ditekan (feedback instan). */}
     {resetting && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
-        <div className="bg-white rounded-xl shadow-xl px-8 py-7 flex flex-col items-center gap-3 text-gray-800">
-          <RotateCcw size={30} className="animate-spin text-blue-700" />
-          <p className="font-semibold">Mereset session…</p>
-          <p className="text-xs text-gray-500">Mengambil data terbaru dari Lark</p>
+      <div className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div className="panel px-9 py-8 flex flex-col items-center gap-3 text-center">
+          <RotateCcw size={26} className="animate-spin text-[var(--blue)]" />
+          <p className="label text-[var(--ink)]">Mereset session</p>
+          <p className="mono text-[11px] text-[var(--muted)] tracking-wide normal-case">Mengambil data terbaru dari Lark</p>
         </div>
       </div>
     )}

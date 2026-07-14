@@ -16,23 +16,20 @@ function LinkedinIcon({ size = 16, className = '' }) {
 
 export default function Footer() {
   return (
-    <footer className="bg-blue-800 text-white text-center text-xs p-4 font-bold cursor-default group transition-all duration-300">
-      <div className="flex items-center justify-center gap-0 group-hover:gap-3 transition-all duration-300">
-        {/* Teks copyright permanen */}
-        <span>© 2025 PT ONDA MEGA INTEGRA</span>
-
-        {/* Bagian yang mengembang saat hover */}
-        <div className="max-w-0 overflow-hidden opacity-0 group-hover:max-w-[300px] group-hover:opacity-100 transition-all duration-500 ease-in-out whitespace-nowrap">
-          <a
-            href="https://www.linkedin.com/in/andre-marshandito/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-blue-300 hover:text-white transition-colors duration-200"
-          >
-            <span className="font-medium">— Created by Andre Marshandito</span>
-            <LinkedinIcon size={16} className="mb-0.5" />
-          </a>
-        </div>
+    <footer className="border-t border-[var(--line)] bg-[var(--paper)] mt-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-3">
+        <span className="mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">
+          © 2025 — PT Onda Mega Integra
+        </span>
+        <a
+          href="https://www.linkedin.com/in/andre-marshandito/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group inline-flex items-center gap-2 mono text-[11px] uppercase tracking-[0.14em] text-[var(--ink-2)] hover:text-[var(--blue)] transition-colors"
+        >
+          <span>Created by Andre Marshandito</span>
+          <LinkedinIcon size={14} className="transition-transform group-hover:-translate-y-0.5" />
+        </a>
       </div>
     </footer>
   );

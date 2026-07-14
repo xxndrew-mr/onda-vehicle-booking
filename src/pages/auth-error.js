@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { ShieldAlert, RotateCcw } from 'lucide-react';
+import Button from '../components/Button';
 
 /** Halaman publik untuk menampilkan kegagalan SSO (dikecualikan dari proxy auth). */
 export default function AuthError() {
@@ -7,18 +7,27 @@ export default function AuthError() {
   const message = typeof query.message === 'string' ? query.message : 'Terjadi kesalahan saat login.';
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center p-6 sm:p-8">
-      <div className="max-w-lg w-full bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-8 text-center">
-        <ShieldAlert size={48} className="mx-auto text-red-500 mb-4" />
-        <h1 className="text-xl font-bold text-gray-800 mb-2">Login Lark Gagal</h1>
-        <p className="text-gray-600 mb-6 break-words">{message}</p>
-        <button
-          onClick={() => { window.location.href = '/api/auth/login'; }}
-          className="inline-flex items-center gap-2 bg-blue-700 text-white px-5 py-2.5 rounded-md hover:bg-blue-800 transition"
-        >
-          <RotateCcw size={16} /> Coba Login Lagi
-        </button>
-        <p className="text-xs text-gray-400 mt-6">
+    <div className="min-h-screen flex items-center justify-center p-6 sm:p-8">
+      <div className="max-w-xl w-full">
+        <div className="mb-6">
+          <span className="inline-flex items-center gap-[0.6rem] mono text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--danger)]">
+            <span className="w-[26px] h-px" style={{ background: 'var(--danger)' }} /> Login Gagal
+          </span>
+        </div>
+        <h1 className="page-title text-[var(--ink)]">Login Lark Gagal</h1>
+
+        <div className="mt-6 panel p-5 border-[var(--danger-line)] bg-[var(--danger-wash)]">
+          <p className="mono text-[11px] uppercase tracking-[0.12em] text-[var(--danger)] mb-2">Pesan sistem</p>
+          <p className="text-sm text-[var(--ink)] break-words leading-relaxed">{message}</p>
+        </div>
+
+        <div className="mt-6">
+          <Button variant="primary" arrow onClick={() => { window.location.href = '/api/auth/login'; }}>
+            Coba Login Lagi
+          </Button>
+        </div>
+
+        <p className="text-xs text-[var(--muted)] mt-8 leading-relaxed max-w-md">
           Jika masalah berlanjut, hubungi admin: pastikan aplikasi dibuka lewat Lark Workplace dan
           konfigurasi Lark Developer Console sudah benar.
         </p>

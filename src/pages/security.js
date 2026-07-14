@@ -8,9 +8,9 @@
 export default function SecurityDisabled() {
   return (
     <div className="p-8 min-h-[60vh] flex items-center justify-center">
-      <div className="text-center text-gray-500">
-        <p className="text-lg font-semibold">Halaman Security dinonaktifkan sementara.</p>
-        <p className="text-sm mt-1">Fitur ini belum digunakan.</p>
+      <div className="text-center">
+        <p className="font-display text-3xl text-[var(--ink)]">Security dinonaktifkan</p>
+        <p className="text-sm mt-2 text-[var(--muted)]">Fitur ini belum digunakan.</p>
       </div>
     </div>
   );

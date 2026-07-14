@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, X, Car, UserCheck, Building2, AlertTriangle, ClipboardCheck } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { getJson, sendJson } from '../lib/api';
 import { isVehicleAvailable, VEHICLE_STATUS_META } from '../lib/vehicleStatus';
 import Avatar from '../components/Avatar';
@@ -7,18 +7,19 @@ import Person from '../components/Person';
 import Toast from '../components/Toast';
 import Pagination, { usePagination } from '../components/Pagination';
 import PageHeader from '../components/PageHeader';
+import Button from '../components/Button';
+import Reveal from '../components/Reveal';
+import { SectionHead } from '../components/Eyebrow';
 
 const fmt = (t) => (t?.value ? new Date(t.value).toLocaleString('id-ID') : '-');
 
 function RequesterLine({ item }) {
   return (
-    <div className="flex items-center gap-2 text-gray-600">
+    <div className="flex items-center gap-2 text-[var(--ink-2)] text-sm">
       <Avatar src={item.requester_avatar} name={item.user_name} size={24} />
       {item.user_name}
       {item.requester_department && (
-        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-          {item.requester_department}
-        </span>
+        <span className="badge badge--blue">{item.requester_department}</span>
       )}
     </div>
   );
@@ -27,29 +28,24 @@ function RequesterLine({ item }) {
 // Kartu tahap supervisor (Approve/Reject sederhana).
 function SupervisorCard({ item, onAction, stageInfo }) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-100 hover:shadow-md transition-shadow flex justify-between items-center">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2 font-semibold text-lg text-blue-700">
-          <Car size={20} /> {item.vehicle_name} ({item.license_plate})
+    <div className="panel p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="min-w-0 space-y-1.5">
+        <div className="font-display text-xl text-[var(--ink)]">
+          {item.vehicle_name}{' '}
+          <span className="mono text-[11px] tracking-[0.1em] text-[var(--muted)] align-middle">
+            {item.license_plate}
+          </span>
         </div>
         <RequesterLine item={item} />
-        {stageInfo && <p className="text-xs text-gray-400">{stageInfo}</p>}
-        <p className="text-sm text-gray-500 italic">&ldquo;Keperluan: {item.purpose}&rdquo;</p>
-        <p className="text-xs text-gray-400">Waktu: {fmt(item.start_time)} &mdash; {fmt(item.end_time)}</p>
+        {stageInfo && <p className="text-xs text-[var(--muted)]">{stageInfo}</p>}
+        <p className="text-sm text-[var(--ink-2)] italic">&ldquo;Keperluan: {item.purpose}&rdquo;</p>
+        <p className="mono text-[11px] uppercase tracking-[0.1em] text-[var(--muted)]">
+          {fmt(item.start_time)} &mdash; {fmt(item.end_time)}
+        </p>
       </div>
       <div className="flex gap-2 shrink-0">
-        <button
-          onClick={() => onAction(item.id, 'APPROVE')}
-          className="flex items-center gap-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-        >
-          <Check size={18} /> Approve
-        </button>
-        <button
-          onClick={() => onAction(item.id, 'REJECT')}
-          className="flex items-center gap-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
-        >
-          <X size={18} /> Reject
-        </button>
+        <Button variant="primary" arrow onClick={() => onAction(item.id, 'APPROVE')}>Setujui</Button>
+        <Button variant="danger" onClick={() => onAction(item.id, 'REJECT')}>Tolak</Button>
       </div>
     </div>
   );
@@ -77,55 +73,47 @@ function GaCard({ item, onAction, stageInfo, availableVehicles }) {
   const statusMeta = VEHICLE_STATUS_META[item.vehicle_status] || null;
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-100 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 font-semibold text-lg text-blue-700">
-            <Car size={20} /> {item.vehicle_name} ({item.license_plate})
-            {statusMeta && (
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusMeta.cls}`}>
-                {statusMeta.label}
-              </span>
-            )}
+    <div className="panel p-5 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="min-w-0 space-y-1.5">
+          <div className="flex items-center gap-2 font-display text-xl text-[var(--ink)]">
+            {item.vehicle_name}{' '}
+            <span className="mono text-[11px] tracking-[0.1em] text-[var(--muted)] align-middle">
+              {item.license_plate}
+            </span>
+            {statusMeta && <span className={statusMeta.cls}>{statusMeta.label}</span>}
           </div>
           <RequesterLine item={item} />
-          {stageInfo && <p className="text-xs text-gray-400">{stageInfo}</p>}
-          <p className="text-sm text-gray-500 italic">&ldquo;Keperluan: {item.purpose}&rdquo;</p>
-          <p className="text-xs text-gray-400">Waktu: {fmt(item.start_time)} &mdash; {fmt(item.end_time)}</p>
+          {stageInfo && <p className="text-xs text-[var(--muted)]">{stageInfo}</p>}
+          <p className="text-sm text-[var(--ink-2)] italic">&ldquo;Keperluan: {item.purpose}&rdquo;</p>
+          <p className="mono text-[11px] uppercase tracking-[0.1em] text-[var(--muted)]">
+            {fmt(item.start_time)} &mdash; {fmt(item.end_time)}
+          </p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button
-            onClick={approve}
-            disabled={swap && !swapReady}
-            className="flex items-center gap-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50"
-          >
-            <Check size={18} /> {swap ? 'Setujui + Ganti' : 'Approve'}
-          </button>
-          <button
-            onClick={() => onAction(item.id, 'REJECT')}
-            className="flex items-center gap-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
-          >
-            <X size={18} /> Reject
-          </button>
+          <Button variant="primary" arrow onClick={approve} disabled={swap && !swapReady}>
+            {swap ? 'Setujui + Ganti' : 'Setujui'}
+          </Button>
+          <Button variant="danger" onClick={() => onAction(item.id, 'REJECT')}>Tolak</Button>
         </div>
       </div>
 
       {/* Pergantian armada hanya diizinkan bila kendaraan yang diajukan bermasalah */}
       {hasIssue ? (
-        <div className="mt-4 pt-4 border-t">
-          <label className="flex items-center gap-2 text-sm text-amber-700 font-medium">
+        <div className="mt-5 pt-5 hairline">
+          <label className="flex items-center gap-2 text-sm text-[var(--danger)] font-medium cursor-pointer">
             <input type="checkbox" checked={swap} onChange={(e) => setSwap(e.target.checked)} />
             <AlertTriangle size={15} /> Ganti armada karena kendala operasional
           </label>
 
           {swap && (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Kendaraan pengganti</label>
+                <label className="label block mb-1.5">Kendaraan pengganti</label>
                 <select
                   value={newVehicleId}
                   onChange={(e) => setNewVehicleId(e.target.value)}
-                  className="w-full p-2 border rounded text-sm"
+                  className="field text-sm"
                 >
                   <option value="">— pilih kendaraan —</option>
                   {options.map((v) => (
@@ -133,16 +121,16 @@ function GaCard({ item, onAction, stageInfo, availableVehicles }) {
                   ))}
                 </select>
                 {options.length === 0 && (
-                  <p className="text-xs text-red-500 mt-1">Tidak ada kendaraan Ready lain.</p>
+                  <p className="text-xs text-[var(--danger)] mt-1.5">Tidak ada kendaraan Ready lain.</p>
                 )}
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Alasan pergantian (wajib)</label>
+                <label className="label block mb-1.5">Alasan pergantian (wajib)</label>
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={2}
-                  className="w-full p-2 border rounded text-sm"
+                  className="field text-sm"
                   placeholder="Contoh: kendaraan sedang maintenance"
                 />
               </div>
@@ -150,7 +138,7 @@ function GaCard({ item, onAction, stageInfo, availableVehicles }) {
           )}
         </div>
       ) : (
-        <p className="mt-3 text-xs text-gray-400">
+        <p className="mt-4 mono text-[11px] uppercase tracking-[0.1em] text-[var(--muted)]">
           Kendaraan tersedia (Ready) — pergantian armada tidak diperlukan.
         </p>
       )}
@@ -208,88 +196,88 @@ export default function Approvals() {
   const nothingToDo =
     (!showSupervisor || queues.supervisorQueue.length === 0) &&
     (!isGa || queues.gaQueue.length === 0);
+  const gaNum = showSupervisor ? '02' : '01';
 
   return (
-    <div className="p-6 sm:p-8">
-      <div className="max-w-4xl mx-auto">
-        <PageHeader
-          icon={ClipboardCheck}
-          title="Persetujuan Booking"
-          subtitle="Tinjau dan proses pengajuan booking kendaraan."
-        />
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-4">
+      <PageHeader
+        eyebrow="Persetujuan"
+        title="Persetujuan Booking"
+        subtitle="Tinjau dan proses pengajuan booking kendaraan."
+      />
 
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ message: '', type: 'success' })}
-        />
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: '', type: 'success' })}
+      />
 
-        {errorMsg && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg">
-            <span className="font-semibold">Gagal:</span> {errorMsg}
-          </div>
-        )}
+      {errorMsg && (
+        <div className="mb-4 p-4 rounded-[var(--radius)] border border-[var(--danger-line)] bg-[var(--danger-wash)] text-[var(--danger)] text-sm">
+          {errorMsg}
+        </div>
+      )}
 
-        {isAdmin && (
-          <p className="mb-4 text-sm text-gray-500">
-            Anda login sebagai <span className="font-semibold">Administrator</span> — bisa memproses
-            semua tahap (supervisor mana pun & GA).
-          </p>
-        )}
+      {isAdmin && (
+        <p className="mb-6 text-sm text-[var(--muted)]">
+          Anda login sebagai <span className="text-[var(--ink)] font-medium">Administrator</span> — bisa
+          memproses semua tahap (supervisor mana pun &amp; GA).
+        </p>
+      )}
 
-        {showSupervisor && (
-        <section className="mb-8">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-700 mb-3">
-            <UserCheck size={20} />{' '}
-            {isAdmin ? 'Tahap Supervisor (semua divisi)' : 'Menunggu Persetujuan Saya (Supervisor)'}
-          </h2>
+      {showSupervisor && (
+        <section className="mb-10">
+          <SectionHead
+            num="01"
+            title={isAdmin ? 'Tahap Supervisor' : 'Persetujuan Saya'}
+            tag={isAdmin ? 'Semua divisi' : 'Supervisor'}
+          />
           {queues.supervisorQueue.length === 0 ? (
-            <div className="bg-white p-6 text-center text-gray-500 rounded-lg shadow-sm">
+            <div className="panel p-10 text-center text-sm text-[var(--muted)]">
               {isAdmin ? 'Tidak ada pengajuan di tahap supervisor.' : 'Tidak ada pengajuan dari anggota tim Anda.'}
             </div>
           ) : (
             <div className="space-y-4">
-              {supPage.pageItems.map((item) => (
-                <SupervisorCard
-                  key={item.id}
-                  item={item}
-                  onAction={handleAction}
-                  stageInfo={
-                    isAdmin ? (
-                      <span className="inline-flex items-center gap-1">
-                        Supervisor pemohon:{' '}
-                        {item.supervisor_name ? (
-                          <Person name={item.supervisor_name} openId={item.supervisor_id} size={18} />
-                        ) : (
-                          '—'
-                        )}
-                      </span>
-                    ) : (
-                      'Anda adalah supervisor pemohon (dari struktur organisasi Lark).'
-                    )
-                  }
-                />
+              {supPage.pageItems.map((item, i) => (
+                <Reveal key={item.id} delay={i * 60}>
+                  <SupervisorCard
+                    item={item}
+                    onAction={handleAction}
+                    stageInfo={
+                      isAdmin ? (
+                        <span className="inline-flex items-center gap-1">
+                          Supervisor pemohon:{' '}
+                          {item.supervisor_name ? (
+                            <Person name={item.supervisor_name} openId={item.supervisor_id} size={18} />
+                          ) : (
+                            '—'
+                          )}
+                        </span>
+                      ) : (
+                        'Anda adalah supervisor pemohon (dari struktur organisasi Lark).'
+                      )
+                    }
+                  />
+                </Reveal>
               ))}
             </div>
           )}
           <Pagination page={supPage.page} totalPages={supPage.totalPages} total={supPage.total} onChange={supPage.setPage} />
         </section>
-        )}
+      )}
 
-        {isGa && (
-          <section>
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-700 mb-3">
-              <Building2 size={20} /> Antrian General Affairs
-            </h2>
-            {queues.gaQueue.length === 0 ? (
-              <div className="bg-white p-6 text-center text-gray-500 rounded-lg shadow-sm">
-                Tidak ada antrian untuk GA.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {gaPage.pageItems.map((item) => (
+      {isGa && (
+        <section>
+          <SectionHead num={gaNum} title="Antrian General Affairs" tag="GA" />
+          {queues.gaQueue.length === 0 ? (
+            <div className="panel p-10 text-center text-sm text-[var(--muted)]">
+              Tidak ada antrian untuk GA.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {gaPage.pageItems.map((item, i) => (
+                <Reveal key={item.id} delay={i * 60}>
                   <GaCard
-                    key={item.id}
                     item={item}
                     onAction={handleAction}
                     availableVehicles={availableVehicles}
@@ -304,19 +292,20 @@ export default function Approvals() {
                       )
                     }
                   />
-                ))}
-              </div>
-            )}
-            <Pagination page={gaPage.page} totalPages={gaPage.totalPages} total={gaPage.total} onChange={gaPage.setPage} />
-          </section>
-        )}
+                </Reveal>
+              ))}
+            </div>
+          )}
+          <Pagination page={gaPage.page} totalPages={gaPage.totalPages} total={gaPage.total} onChange={gaPage.setPage} />
+        </section>
+      )}
 
-        {nothingToDo && !errorMsg && (
-          <div className="mt-6 bg-white p-10 text-center rounded-lg shadow">
-            Tidak ada antrian pending untuk Anda. 🎉
-          </div>
-        )}
-      </div>
+      {nothingToDo && !errorMsg && (
+        <div className="mt-6 panel p-12 text-center">
+          <p className="font-display text-2xl text-[var(--ink)]">Antrian bersih</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">Tidak ada pengajuan yang menunggu tindakan Anda.</p>
+        </div>
+      )}
     </div>
   );
 }

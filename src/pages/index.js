@@ -7,10 +7,11 @@ import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
 import { StatusBadge, AuditLine, vehicleChangeNote, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
 import { isVehicleAvailable, vehicleSpecText } from '../lib/vehicleStatus';
-import { CalendarDays } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import Toast from '../components/Toast';
 import PageHeader from '../components/PageHeader';
+import Button from '../components/Button';
+import Reveal from '../components/Reveal';
 
 // Kalender hanya menampilkan booking AKTIF (Pending/Approved). Rejected & Cancelled
 // disembunyikan dari kalender (slot bebas) — record tetap ada di Riwayat user.
@@ -133,30 +134,26 @@ export default function Home() {
   const selectedVehicle = slotVehicles.find((v) => v.id === modalVehicleId) || null;
 
   return (
-    <div className="p-6 sm:p-8">
-      <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-100">
-        <PageHeader
-          icon={CalendarDays}
-          title="Booking Kendaraan"
-          subtitle={
-            user
-              ? `Pilih rentang waktu di kalender, lalu pilih kendaraan tersedia — atas nama ${user.name}.`
-              : 'Pilih rentang waktu di kalender, lalu pilih kendaraan yang tersedia.'
-          }
-        />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-4">
+      <PageHeader
+        eyebrow="Booking"
+        title="Booking Kendaraan"
+        subtitle={
+          user
+            ? `Pilih rentang waktu di kalender, lalu pilih kendaraan tersedia — atas nama ${user.name}.`
+            : 'Pilih rentang waktu di kalender, lalu pilih kendaraan yang tersedia.'
+        }
+      />
 
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ message: '', type: 'success' })}
-        />
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'success' })} />
 
-        {errorMsg && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg">
-            <span className="font-semibold">Perhatian:</span> {errorMsg}
-          </div>
-        )}
+      {errorMsg && (
+        <div className="mb-6 p-4 rounded-[var(--radius)] border border-[var(--danger-line)] bg-[var(--danger-wash)] text-[var(--danger)] text-sm">
+          {errorMsg}
+        </div>
+      )}
 
+      <Reveal className="panel p-3 sm:p-5">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
@@ -173,24 +170,24 @@ export default function Home() {
           eventClick={(info) => setDetail(info.event.extendedProps)}
           height="70vh"
         />
-      </div>
+      </Reveal>
 
       {draft && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-bold text-blue-900 mb-1">Ajukan Booking</h2>
-            <p className="text-sm text-gray-500 mb-4">
+        <div className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="panel w-full max-w-md p-6">
+            <h2 className="font-display text-2xl text-[var(--ink)]">Ajukan Booking</h2>
+            <p className="mono text-[11px] uppercase tracking-[0.12em] text-[var(--muted)] mt-1 mb-5">
               {fmt(draft.start)} &rarr; {fmt(draft.end)}
             </p>
 
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kendaraan tersedia</label>
+            <label className="label block mb-1.5">Kendaraan tersedia</label>
             {slotVehicles.length === 0 ? (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md text-sm">
+              <div className="mb-4 p-3 rounded-[10px] border border-[var(--line)] bg-[var(--mist)] text-sm text-[var(--ink-2)]">
                 Tidak ada kendaraan tersedia untuk jam ini. Coba jam/tanggal lain.
               </div>
             ) : (
               <select
-                className="w-full border rounded-md p-2 mb-2 text-sm"
+                className="field mb-2 text-sm"
                 value={modalVehicleId}
                 onChange={(e) => setModalVehicleId(e.target.value)}
                 autoFocus
@@ -204,22 +201,24 @@ export default function Home() {
             )}
 
             {selectedVehicle && (
-              <div className="mb-4 rounded-md bg-blue-50 border border-blue-100 p-3 text-sm">
+              <div className="mb-4 rounded-[10px] border border-[var(--line)] bg-[var(--mist)] p-3">
                 {vehicleSpecText(selectedVehicle) && (
-                  <p className="text-blue-900 font-medium">{vehicleSpecText(selectedVehicle)}</p>
+                  <p className="mono text-[11px] uppercase tracking-[0.1em] text-[var(--blue)]">
+                    {vehicleSpecText(selectedVehicle)}
+                  </p>
                 )}
                 {selectedVehicle.notes && (
-                  <p className="text-gray-600 text-xs mt-1">Catatan: {selectedVehicle.notes}</p>
+                  <p className="text-[var(--ink-2)] text-xs mt-1.5">Catatan: {selectedVehicle.notes}</p>
                 )}
                 {!vehicleSpecText(selectedVehicle) && !selectedVehicle.notes && (
-                  <p className="text-gray-400 text-xs">Belum ada info tambahan untuk kendaraan ini.</p>
+                  <p className="text-[var(--muted)] text-xs">Belum ada info tambahan untuk kendaraan ini.</p>
                 )}
               </div>
             )}
 
-            <label className="block text-sm font-medium text-gray-700 mb-1">Keperluan</label>
+            <label className="label block mb-1.5">Keperluan</label>
             <textarea
-              className="w-full border rounded-md p-2 mb-4 text-sm"
+              className="field mb-5 text-sm"
               rows={3}
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
@@ -227,44 +226,39 @@ export default function Home() {
             />
 
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setDraft(null)}
-                disabled={submitting}
-                className="px-4 py-2 rounded-md border text-gray-700 hover:bg-gray-50 transition"
-              >
-                Batal
-              </button>
-              <button
+              <Button variant="ghost" onClick={() => setDraft(null)} disabled={submitting}>Batal</Button>
+              <Button
+                variant="primary"
+                arrow
                 onClick={submitBooking}
                 disabled={submitting || !modalVehicleId || !purpose.trim()}
-                className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-800 transition disabled:opacity-50"
               >
-                {submitting ? 'Mengirim…' : 'Ajukan'}
-              </button>
+                {submitting ? 'Mengirim' : 'Ajukan'}
+              </Button>
             </div>
           </div>
         </div>
       )}
 
       {detail && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-bold text-blue-900 mb-1">Detail Booking</h2>
-            <div className="text-sm text-gray-600 space-y-1 mb-4">
-              <p><span className="font-medium">Kendaraan:</span> {detail.vehicle_name} {detail.license_plate ? `(${detail.license_plate})` : ''}</p>
-              <p className="flex items-center gap-2">
-                <span className="font-medium">Pemohon:</span>
-                <Avatar src={detail.requester_avatar} name={detail.user_name} size={22} />
-                {detail.user_name}{detail.requester_department ? ` — ${detail.requester_department}` : ''}
-              </p>
-              <p><span className="font-medium">Waktu:</span> {fmt(detail.start_time?.value)} &rarr; {fmt(detail.end_time?.value)}</p>
-              <p><span className="font-medium">Keperluan:</span> {detail.purpose}</p>
-              <p className="flex items-center gap-2">
-                <span className="font-medium">Status:</span> <StatusBadge status={detail.status} />
-              </p>
-              <div className="text-xs text-gray-400"><AuditLine b={detail} size={18} /></div>
+        <div className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="panel w-full max-w-md p-6">
+            <h2 className="font-display text-2xl text-[var(--ink)] mb-4">Detail Booking</h2>
+            <div className="text-sm text-[var(--ink-2)] space-y-2.5 mb-5">
+              <p><span className="label">Kendaraan</span><br />{detail.vehicle_name} {detail.license_plate ? `(${detail.license_plate})` : ''}</p>
+              <div>
+                <span className="label">Pemohon</span>
+                <div className="flex items-center gap-2 mt-1 text-[var(--ink)]">
+                  <Avatar src={detail.requester_avatar} name={detail.user_name} size={24} />
+                  {detail.user_name}{detail.requester_department ? ` — ${detail.requester_department}` : ''}
+                </div>
+              </div>
+              <p><span className="label">Waktu</span><br /><span className="num">{fmt(detail.start_time?.value)} &rarr; {fmt(detail.end_time?.value)}</span></p>
+              <p><span className="label">Keperluan</span><br />{detail.purpose}</p>
+              <div className="flex items-center gap-2"><span className="label">Status</span> <StatusBadge status={detail.status} /></div>
+              <div className="text-xs text-[var(--muted)]"><AuditLine b={detail} size={18} /></div>
               {vehicleChangeNote(detail) && (
-                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                <p className="text-xs text-[var(--danger)] bg-[var(--danger-wash)] border border-[var(--danger-line)] rounded-[10px] p-2.5">
                   {vehicleChangeNote(detail)}
                 </p>
               )}
@@ -272,22 +266,13 @@ export default function Home() {
 
             <div className="flex justify-between items-center gap-2">
               {canCancel ? (
-                <button
-                  onClick={() => cancelBooking(detail.id)}
-                  disabled={cancelling}
-                  className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
-                >
-                  {cancelling ? 'Membatalkan…' : 'Batalkan Booking'}
-                </button>
+                <Button variant="danger" onClick={() => cancelBooking(detail.id)} disabled={cancelling}>
+                  {cancelling ? 'Membatalkan' : 'Batalkan Booking'}
+                </Button>
               ) : (
                 <span />
               )}
-              <button
-                onClick={() => setDetail(null)}
-                className="px-4 py-2 rounded-md border text-gray-700 hover:bg-gray-50 transition"
-              >
-                Tutup
-              </button>
+              <Button variant="ghost" onClick={() => setDetail(null)}>Tutup</Button>
             </div>
           </div>
         </div>
