@@ -45,7 +45,7 @@ Next.js 16 **Pages Router** (jangan buat `src/app/` — konflik route). React 19
 
 ## Status State Machine (kontrak antar-komponen, jangan diubah sepihak)
 
-String status dipakai oleh API, halaman approval, security (filter `Approved`), dan warna kalender (`Rejected*` merah, `Cancelled*` abu-abu, `Approved` hijau, sisanya kuning):
+String status dipakai oleh API, halaman approval, dan kalender. Kalender di `index.js` HANYA menampilkan booking AKTIF (`Approved` hijau, `Pending*` kuning); `Rejected*` & `Cancelled*` DISEMBUNYIKAN dari kalender (`isActiveBooking`) — tetap muncul di Riwayat user. Booking dibuat lewat modal: pilih jam dulu → pilih kendaraan Ready yang BEBAS di jam itu (`vehiclesFreeForSlot`, cek bentrok client-side terhadap event aktif; server tetap validasi 409).
 
 - Booking baru: pemohon punya supervisor → `Pending Supervisor` (dengan `supervisor_id`); tidak punya → `Pending GA`. Supervisor di-resolve di `lark.js`: `contact.leader_user_id` (direct manager), FALLBACK ke leader departemen bila kosong. Semua open_id.
 - `Pending Supervisor`: hanya user dengan open_id == `supervisor_id` (atau ADMIN). APPROVE → `Pending GA`; REJECT → `Rejected By Supervisor`

@@ -10,38 +10,39 @@ import { isVehicleAvailable } from '../lib/vehicleStatus';
 import Avatar from '../components/Avatar';
 import Toast from '../components/Toast';
 
-const getEventColor = (status) => {
+// Kalender hanya menampilkan booking AKTIF (Pending/Approved). Rejected & Cancelled
+// disembunyikan dari kalender (slot bebas) — record tetap ada di Riwayat user.
+const isActiveBooking = (status) => {
   const s = String(status || '');
-  if (s.includes('Rejected')) return '#ef4444'; // Merah
-  if (s.includes('Cancelled')) return '#9ca3af'; // Abu-abu (dibatalkan)
-  if (s === 'Approved') return '#22c55e'; // Hijau (Done)
-  return '#f59e0b'; // Kuning (Pending/Process)
+  return !s.includes('Rejected') && !s.includes('Cancelled');
 };
+
+const getEventColor = (status) => (status === 'Approved' ? '#22c55e' : '#f59e0b'); // hijau / kuning
 
 const fmt = fmtTs;
 
 export default function Home() {
   const { user } = useAuth();
   const [events, setEvents] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [vehicleId, setVehicleId] = useState('');
+  const [vehicles, setVehicles] = useState([]); // hanya kendaraan Ready
   const [errorMsg, setErrorMsg] = useState('');
   const [toast, setToast] = useState({ message: '', type: 'success' });
 
-  // Modal booking (pengganti window.prompt yang tidak selalu ada di webview Lark).
+  // Modal booking: pilih kendaraan setelah menentukan jam.
   const [draft, setDraft] = useState(null); // { start, end }
+  const [modalVehicleId, setModalVehicleId] = useState('');
   const [purpose, setPurpose] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Modal detail + pembatalan booking.
-  const [detail, setDetail] = useState(null); // extendedProps booking
+  const [detail, setDetail] = useState(null);
   const [cancelling, setCancelling] = useState(false);
 
   const fetchBookings = useCallback(() => {
     getJson('/api/bookings')
       .then((data) => {
         const formatted = data
-          .filter((b) => b.start_time?.value && b.end_time?.value)
+          .filter((b) => b.start_time?.value && b.end_time?.value && isActiveBooking(b.status))
           .map((b) => ({
             id: b.id,
             title: `${b.vehicle_name} - ${b.user_name}`,
@@ -59,30 +60,42 @@ export default function Home() {
   useEffect(() => {
     fetchBookings();
     getJson('/api/vehicles')
-      .then((data) => {
-        // Hanya kendaraan tersedia (Ready) yang bisa dipesan — status diatur GA.
-        const available = data.filter((v) => isVehicleAvailable(v.status));
-        setVehicles(available);
-        if (available.length > 0) setVehicleId((prev) => prev || available[0].id);
-      })
+      .then((data) => setVehicles(data.filter((v) => isVehicleAvailable(v.status))))
       .catch((err) => setErrorMsg(err.message));
   }, [fetchBookings]);
 
+  // Kendaraan Ready yang BEBAS pada rentang waktu [start, end) — yang sudah dibooking
+  // atau sedang menunggu approval untuk jam yang tumpang-tindih tidak ikut.
+  const vehiclesFreeForSlot = useCallback(
+    (start, end) => {
+      const s = new Date(start);
+      const e = new Date(end);
+      return vehicles.filter((v) => {
+        const conflict = events.some(
+          (ev) =>
+            ev.extendedProps.vehicle_id === v.id &&
+            new Date(ev.start) < e &&
+            new Date(ev.end) > s
+        );
+        return !conflict;
+      });
+    },
+    [vehicles, events]
+  );
+
   const handleDateSelect = (selectInfo) => {
-    if (!vehicleId) {
-      setErrorMsg('Pilih kendaraan terlebih dahulu.');
-      return;
-    }
+    const free = vehiclesFreeForSlot(selectInfo.startStr, selectInfo.endStr);
     setPurpose('');
+    setModalVehicleId(free.length > 0 ? free[0].id : '');
     setDraft({ start: selectInfo.startStr, end: selectInfo.endStr });
   };
 
   const submitBooking = async () => {
-    if (!purpose.trim()) return;
+    if (!modalVehicleId || !purpose.trim()) return;
     setSubmitting(true);
     try {
       const data = await sendJson('/api/bookings', 'POST', {
-        vehicle_id: vehicleId,
+        vehicle_id: modalVehicleId,
         start_time: draft.start,
         end_time: draft.end,
         purpose: purpose.trim(),
@@ -91,7 +104,7 @@ export default function Home() {
       setToast({ message: `Booking berhasil diajukan! Status: ${data.status || 'Pending'}`, type: 'success' });
       fetchBookings();
     } catch (err) {
-      setErrorMsg(err.message);
+      setToast({ message: err.message, type: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -105,7 +118,7 @@ export default function Home() {
       setToast({ message: 'Booking dibatalkan.', type: 'success' });
       fetchBookings();
     } catch (err) {
-      setErrorMsg(err.message);
+      setToast({ message: err.message, type: 'error' });
     } finally {
       setCancelling(false);
     }
@@ -114,33 +127,16 @@ export default function Home() {
   const canCancel =
     detail && user && detail.requester_id === user.id && ACTIVE_STATUSES.includes(detail.status);
 
+  const slotVehicles = draft ? vehiclesFreeForSlot(draft.start, draft.end) : [];
+
   return (
     <div className="p-6 sm:p-8">
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-100">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Booking Kendaraan</h1>
-
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            Kendaraan:
-            <select
-              className="p-2 border rounded shadow-sm"
-              value={vehicleId}
-              onChange={(e) => setVehicleId(e.target.value)}
-            >
-              {vehicles.length === 0 && <option value="">— tidak ada data —</option>}
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} ({v.license_plate})
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Booking Kendaraan</h1>
         {user && (
           <p className="mb-4 text-sm text-gray-500">
-            Booking dibuat atas nama <span className="font-semibold">{user.name}</span> — pilih rentang
-            waktu di kalender (tampilan Minggu/Hari) untuk mengajukan.
+            Pilih rentang waktu di kalender (tampilan Minggu/Hari), lalu pilih kendaraan yang tersedia.
+            Booking dibuat atas nama <span className="font-semibold">{user.name}</span>.
           </p>
         )}
 
@@ -166,7 +162,6 @@ export default function Home() {
             right: 'dayGridMonth,timeGridWeek,timeGridDay',
           }}
           selectable={true}
-          // Hindari seleksi date-only di tampilan bulan (menggeser jam karena zona waktu).
           selectAllow={(span) => !span.allDay}
           select={handleDateSelect}
           events={events}
@@ -183,6 +178,26 @@ export default function Home() {
               {fmt(draft.start)} &rarr; {fmt(draft.end)}
             </p>
 
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kendaraan tersedia</label>
+            {slotVehicles.length === 0 ? (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md text-sm">
+                Tidak ada kendaraan tersedia untuk jam ini. Coba jam/tanggal lain.
+              </div>
+            ) : (
+              <select
+                className="w-full border rounded-md p-2 mb-4 text-sm"
+                value={modalVehicleId}
+                onChange={(e) => setModalVehicleId(e.target.value)}
+                autoFocus
+              >
+                {slotVehicles.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} ({v.license_plate})
+                  </option>
+                ))}
+              </select>
+            )}
+
             <label className="block text-sm font-medium text-gray-700 mb-1">Keperluan</label>
             <textarea
               className="w-full border rounded-md p-2 mb-4 text-sm"
@@ -190,7 +205,6 @@ export default function Home() {
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               placeholder="Contoh: Antar dokumen ke kantor cabang"
-              autoFocus
             />
 
             <div className="flex justify-end gap-2">
@@ -203,7 +217,7 @@ export default function Home() {
               </button>
               <button
                 onClick={submitBooking}
-                disabled={submitting || !purpose.trim()}
+                disabled={submitting || !modalVehicleId || !purpose.trim()}
                 className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-800 transition disabled:opacity-50"
               >
                 {submitting ? 'Mengirim…' : 'Ajukan'}
