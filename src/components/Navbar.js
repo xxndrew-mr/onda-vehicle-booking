@@ -52,57 +52,57 @@ export default function Navbar() {
     {/* Floating: menempel di atas (sticky) dengan jarak dari tepi + pill melayang. */}
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
       <nav className="max-w-6xl mx-auto bg-blue-900/90 backdrop-blur-md text-white rounded-2xl shadow-lg shadow-blue-900/20 ring-1 ring-white/10">
-        <div className="px-4 sm:px-5 h-14 flex items-center justify-between gap-3">
+        <div className="px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
+          {/* Brand */}
           <Link href="/" className="flex items-center gap-2 font-bold shrink-0">
             <span className="grid place-items-center w-8 h-8 rounded-xl bg-white/10">
               <Car size={18} />
             </span>
-            <span className="hidden sm:inline">Car Booking &mdash; PT. Onda Mega Integra</span>
-            <span className="sm:hidden">Car Booking</span>
+            <span className="hidden lg:inline whitespace-nowrap">Car Booking</span>
           </Link>
 
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1">
-              {links.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${
-                    pathname === href
-                      ? 'bg-white text-blue-900 font-semibold shadow-sm'
-                      : 'hover:bg-white/10'
-                  }`}
-                >
-                  <Icon size={16} />
-                  <span className="hidden md:inline">{label}</span>
-                </Link>
-              ))}
-            </div>
-
-            {user && (
-              <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-white/15">
-                <span className="grid place-items-center w-8 h-8 rounded-full bg-white/10 shrink-0">
-                  <User size={16} />
-                </span>
-                <div className="text-sm leading-tight hidden sm:block">
-                  <div className="font-semibold">{user.name}</div>
-                  <div className="text-xs text-blue-200">
-                    {ROLE_LABELS[user.role] || user.role}
-                    {user.department ? ` · ${user.department}` : ''}
-                  </div>
-                </div>
-                <button
-                  onClick={resetSession}
-                  disabled={resetting}
-                  title="Reset Session — ambil ulang data terbaru dari Lark"
-                  className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition text-sm disabled:opacity-60"
-                >
-                  <RotateCcw size={16} className={resetting ? 'animate-spin' : ''} />
-                  <span className="hidden sm:inline">Reset Session</span>
-                </button>
-              </div>
-            )}
+          {/* Menu */}
+          <div className="flex items-center gap-1">
+            {links.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                title={label}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${
+                  pathname === href
+                    ? 'bg-white text-blue-900 font-semibold shadow-sm'
+                    : 'hover:bg-white/10'
+                }`}
+              >
+                <Icon size={16} />
+                <span className="hidden md:inline">{label}</span>
+              </Link>
+            ))}
           </div>
+
+          {/* User + Reset */}
+          {user && (
+            <div className="flex items-center gap-2 shrink-0 pl-2 border-l border-white/15">
+              <div className="text-right leading-tight hidden md:block max-w-[9rem]">
+                <div className="text-sm font-semibold truncate">{user.name}</div>
+                <div className="text-[11px] text-blue-200 truncate">
+                  {ROLE_LABELS[user.role] || user.role}
+                  {user.department ? ` · ${user.department}` : ''}
+                </div>
+              </div>
+              <span className="grid place-items-center w-8 h-8 rounded-full bg-white/10 shrink-0">
+                <User size={16} />
+              </span>
+              <button
+                onClick={resetSession}
+                disabled={resetting}
+                title="Reset Session — ambil ulang data terbaru dari Lark"
+                className="grid place-items-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition disabled:opacity-60 shrink-0"
+              >
+                <RotateCcw size={15} className={resetting ? 'animate-spin' : ''} />
+              </button>
+            </div>
+          )}
         </div>
       </nav>
     </header>
