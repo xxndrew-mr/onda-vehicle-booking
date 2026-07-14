@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Car, CalendarDays, ClipboardCheck, ShieldCheck, LogOut, User } from 'lucide-react';
+import { Car, CalendarDays, ClipboardCheck, ShieldCheck, History, LogOut, User } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 const ROLE_LABELS = {
@@ -22,6 +22,7 @@ export default function Navbar() {
 
   const links = [
     { href: '/', label: 'Booking', icon: CalendarDays, show: true },
+    { href: '/riwayat', label: 'Riwayat', icon: History, show: true },
     { href: '/approval', label: 'Approval', icon: ClipboardCheck, show: canApprove },
     { href: '/security', label: 'Security', icon: ShieldCheck, show: true },
   ].filter((l) => l.show);

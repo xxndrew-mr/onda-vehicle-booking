@@ -5,6 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { getJson, sendJson } from '../lib/api';
 import { useAuth } from '../components/AuthContext';
+import { StatusBadge, auditInfo, ACTIVE_STATUSES, fmtTs } from '../components/BookingStatus';
 
 const getEventColor = (status) => {
   const s = String(status || '');
@@ -14,54 +15,11 @@ const getEventColor = (status) => {
   return '#f59e0b'; // Kuning (Pending/Process)
 };
 
-const ACTIVE_STATUSES = ['Pending Supervisor', 'Pending GA', 'Approved'];
-
-const fmt = (iso) => (iso ? new Date(iso).toLocaleString('id-ID') : '-');
-
-// Label + warna badge status untuk riwayat booking.
-const STATUS_META = {
-  'Pending Supervisor': { label: 'Menunggu Supervisor', cls: 'bg-yellow-100 text-yellow-800' },
-  'Pending GA': { label: 'Menunggu GA', cls: 'bg-yellow-100 text-yellow-800' },
-  Approved: { label: 'Disetujui', cls: 'bg-green-100 text-green-700' },
-  'Rejected By Supervisor': { label: 'Ditolak Supervisor', cls: 'bg-red-100 text-red-700' },
-  'Rejected By GA': { label: 'Ditolak GA', cls: 'bg-red-100 text-red-700' },
-  'Cancelled By User': { label: 'Dibatalkan', cls: 'bg-gray-200 text-gray-600' },
-};
-
-function StatusBadge({ status }) {
-  const meta = STATUS_META[status] || { label: status, cls: 'bg-gray-100 text-gray-600' };
-  return (
-    <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${meta.cls}`}>
-      {meta.label}
-    </span>
-  );
-}
-
-// Audit "Name (ou_xxx)" → "Name" untuk tampilan.
-const actorName = (s) => String(s || '').replace(/\s*\(ou_[^)]*\)\s*$/, '');
-
-// Keterangan tindak lanjut per status (siapa yang memproses / sedang ditunggu).
-function auditInfo(b) {
-  switch (b.status) {
-    case 'Pending Supervisor':
-      return b.supervisor_name ? `Menunggu: ${b.supervisor_name}` : '';
-    case 'Pending GA':
-      return b.supervisor_action_by ? `Disetujui supervisor: ${actorName(b.supervisor_action_by)}` : '';
-    case 'Approved':
-      return b.ga_action_by ? `Disetujui GA: ${actorName(b.ga_action_by)}` : '';
-    case 'Rejected By Supervisor':
-      return b.supervisor_action_by ? `Oleh: ${actorName(b.supervisor_action_by)}` : '';
-    case 'Rejected By GA':
-      return b.ga_action_by ? `Oleh: ${actorName(b.ga_action_by)}` : '';
-    default:
-      return '';
-  }
-}
+const fmt = fmtTs;
 
 export default function Home() {
   const { user } = useAuth();
   const [events, setEvents] = useState([]);
-  const [bookings, setBookings] = useState([]); // data mentah untuk riwayat
   const [vehicles, setVehicles] = useState([]);
   const [vehicleId, setVehicleId] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -91,19 +49,9 @@ export default function Home() {
           }));
         setErrorMsg('');
         setEvents(formatted);
-        setBookings(data);
       })
       .catch((err) => setErrorMsg(err.message));
   }, []);
-
-  // Riwayat milik user login, terbaru dulu.
-  const myBookings = user
-    ? bookings
-        .filter((b) => b.requester_id === user.id)
-        .sort(
-          (a, b) => new Date(b.created_at?.value || 0) - new Date(a.created_at?.value || 0)
-        )
-    : [];
 
   useEffect(() => {
     fetchBookings();
@@ -220,75 +168,6 @@ export default function Home() {
           eventClick={(info) => setDetail(info.event.extendedProps)}
           height="70vh"
         />
-      </div>
-
-      {/* Riwayat booking milik user yang sedang login */}
-      <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-lg mt-6">
-        <h2 className="text-lg font-bold text-blue-900 mb-4">Riwayat Booking Saya</h2>
-
-        {myBookings.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-6">
-            Belum ada booking. Pilih rentang waktu di kalender untuk mengajukan.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 border-b">
-                  <th className="py-2 pr-4 font-medium">Kendaraan</th>
-                  <th className="py-2 pr-4 font-medium">Waktu Pakai</th>
-                  <th className="py-2 pr-4 font-medium">Keperluan</th>
-                  <th className="py-2 pr-4 font-medium">Diajukan</th>
-                  <th className="py-2 pr-4 font-medium">Status</th>
-                  <th className="py-2 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {myBookings.map((b) => (
-                  <tr key={b.id} className="border-b last:border-0 align-top">
-                    <td className="py-3 pr-4">
-                      <div className="font-medium text-gray-800">{b.vehicle_name}</div>
-                      {b.license_plate && <div className="text-xs text-gray-400">{b.license_plate}</div>}
-                    </td>
-                    <td className="py-3 pr-4 whitespace-nowrap text-gray-600">
-                      {fmt(b.start_time?.value)}
-                      <div className="text-xs text-gray-400">s/d {fmt(b.end_time?.value)}</div>
-                    </td>
-                    <td className="py-3 pr-4 text-gray-600 max-w-[16rem]">
-                      <div className="truncate" title={b.purpose}>{b.purpose}</div>
-                    </td>
-                    <td className="py-3 pr-4 whitespace-nowrap text-gray-500">
-                      {fmt(b.created_at?.value)}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <StatusBadge status={b.status} />
-                      {auditInfo(b) && (
-                        <div className="text-xs text-gray-400 mt-1">{auditInfo(b)}</div>
-                      )}
-                    </td>
-                    <td className="py-3 whitespace-nowrap text-right">
-                      <button
-                        onClick={() => setDetail(b)}
-                        className="text-blue-700 hover:underline text-xs font-medium mr-3"
-                      >
-                        Detail
-                      </button>
-                      {ACTIVE_STATUSES.includes(b.status) && (
-                        <button
-                          onClick={() => cancelBooking(b.id)}
-                          disabled={cancelling}
-                          className="text-red-600 hover:underline text-xs font-medium disabled:opacity-50"
-                        >
-                          Batalkan
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
 
       {draft && (

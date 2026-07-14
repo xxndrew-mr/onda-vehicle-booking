@@ -7,6 +7,7 @@ Sistem booking mobil kantor internal berbasis web, terintegrasi penuh dengan **L
 | Halaman | Route | Fungsi |
 |---|---|---|
 | Booking | `/` | Kalender mingguan (FullCalendar). Pilih kendaraan + slot waktu → isi keperluan → terkirim atas nama akun Lark Anda. Jadwal bentrok otomatis ditolak. |
+| Riwayat | `/riwayat` | Tab **Booking Saya** (semua pengajuan sendiri + batalkan) dan tab **Riwayat Persetujuan** (khusus supervisor/GA/ADMIN: daftar booking yang pernah diproses, dengan aksi tercatat per tahap). |
 | Approval | `/approval` | Dua antrian nyata: **(1)** pengajuan anggota tim yang supervisornya = Anda (otomatis dari struktur Lark), **(2)** antrian GA (hanya tampil untuk role GA/ADMIN). |
 | Security | `/security` | Monitor gerbang: kendaraan ber-status **Approved** dengan plat nomor, pengguna, dan jam keluar. |
 
@@ -220,6 +221,7 @@ Semua endpoint (kecuali `/api/auth/*`) memerlukan session; tanpa session → `40
 | `GET` | `/api/bookings` | Semua booking (kalender) + nama kendaraan & plat |
 | `POST` | `/api/bookings` | Buat booking `{ vehicle_id, start_time, end_time, purpose }` — pemohon & supervisor otomatis dari session/Lark; 409 jika bentrok |
 | `GET` | `/api/bookings/pending` | Antrian saya: `{ supervisorQueue, gaQueue, role }` |
+| `GET` | `/api/bookings/history` | Riwayat: `{ mine, processed, canApprove }` — `processed` = yang pernah diproses user (supervisor/GA/ADMIN) |
 | `PATCH` | `/api/bookings/:id` | `{ action: "APPROVE"\|"REJECT"\|"CANCEL" }` — tahap & otorisasi ditentukan server; CANCEL oleh pemohon/ADMIN membebaskan slot |
 
 ### Proses sinkronisasi user
