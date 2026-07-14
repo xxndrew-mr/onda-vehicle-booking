@@ -176,11 +176,26 @@ export async function fetchLarkProfile(code) {
       (d.leaders || []).some((l) => l.leaderID === info.open_id)
   );
 
-  // 4. Supervisor langsung dari struktur Lark (leader_user_id)
+  // 4. Supervisor: atasan langsung (leader_user_id). Bila kosong di Lark, jatuh ke
+  //    LEADER DEPARTEMEN pemohon (tiap divisi punya supervisor) — selama bukan diri
+  //    sendiri. Ini menutup kasus di mana HR hanya menetapkan leader departemen,
+  //    bukan field "direct manager" per karyawan.
+  let supervisorId = contact.leader_user_id || '';
+  if (!supervisorId) {
+    for (const d of departments) {
+      const primary = (d.leaders || []).find((l) => l.leaderType === 1) || (d.leaders || [])[0];
+      const deptLeader = d.leader_user_id || primary?.leaderID || '';
+      if (deptLeader && deptLeader !== info.open_id) {
+        supervisorId = deptLeader;
+        break;
+      }
+    }
+  }
+
   let leaderName = '';
-  if (contact.leader_user_id) {
+  if (supervisorId) {
     try {
-      const leader = await getContactUser(contact.leader_user_id, tenantToken);
+      const leader = await getContactUser(supervisorId, tenantToken);
       leaderName = leader.name || '';
     } catch {
       leaderName = '';
@@ -205,7 +220,7 @@ export async function fetchLarkProfile(code) {
     job_title: contact.job_title || '',
     department_ids: departmentIds,
     department_names: departmentNames,
-    leader_user_id: contact.leader_user_id || '',
+    leader_user_id: supervisorId,
     leader_name: leaderName,
     role,
     is_supervisor: isDepartmentLeader,

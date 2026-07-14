@@ -41,7 +41,7 @@ Next.js 16 **Pages Router** (jangan buat `src/app/` — konflik route). React 19
 
 String status dipakai oleh API, halaman approval, security (filter `Approved`), dan warna kalender (`Rejected*` merah, `Cancelled*` abu-abu, `Approved` hijau, sisanya kuning):
 
-- Booking baru: pemohon punya `leader_user_id` di Lark → `Pending Supervisor` (dengan `supervisor_id`); tidak punya → `Pending GA`
+- Booking baru: pemohon punya supervisor → `Pending Supervisor` (dengan `supervisor_id`); tidak punya → `Pending GA`. Supervisor di-resolve di `lark.js`: `contact.leader_user_id` (direct manager), FALLBACK ke leader departemen bila kosong. Semua open_id.
 - `Pending Supervisor`: hanya user dengan open_id == `supervisor_id` (atau ADMIN). APPROVE → `Pending GA`; REJECT → `Rejected By Supervisor`
 - `Pending GA`: hanya role GA/ADMIN. APPROVE → `Approved`; REJECT → `Rejected By GA`
 - CANCEL: pemohon (open_id == `requester_id`) atau ADMIN, dari status aktif (`Pending*`/`Approved`) → `Cancelled By User`. Slot dibebaskan.
