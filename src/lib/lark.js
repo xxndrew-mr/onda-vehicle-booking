@@ -139,19 +139,14 @@ function departmentDisplayName(dept) {
 }
 
 /**
- * Alur lengkap SSO: code → user_access_token → identitas dasar →
- * data organisasi (departemen, supervisor) via Contact API → profil ternormalisasi.
+ * Bangun profil ternormalisasi dari open_id memakai Contact API (tenant token):
+ * departemen, supervisor, job title, role. `info` (opsional) = data user_info saat
+ * login; saat refresh (tanpa OAuth) info null → identitas diambil dari Contact API.
  */
-export async function fetchLarkProfile(code) {
-  // 1. Identitas dasar dari user_access_token
-  const userToken = await exchangeCodeForUserToken(code);
-  const info = await larkGet('/open-apis/authen/v1/user_info', userToken);
-
-  // 2. Data organisasi via identitas aplikasi (tenant_access_token)
-  const tenantToken = await getTenantAccessToken();
+async function buildProfileFromOpenId(openId, tenantToken, info = null) {
   let contact;
   try {
-    contact = await getContactUser(info.open_id, tenantToken);
+    contact = await getContactUser(openId, tenantToken);
   } catch (e) {
     throw new Error(
       `${e.message} — pastikan permission "contact:contact:readonly_as_app" sudah di-grant ` +
@@ -159,9 +154,7 @@ export async function fetchLarkProfile(code) {
     );
   }
 
-  // 3. Departemen: nama (untuk mapping role GA) + apakah user adalah leader-nya.
-  // Error di sini TIDAK boleh di-swallow: nama departemen yang hilang bisa membuat
-  // anggota GA salah ter-resolve jadi STAFF. Jadi biarkan error menggagalkan login.
+  // Departemen: nama (mapping role GA) + apakah user leader-nya. Error TIDAK di-swallow.
   const departmentIds = contact.department_ids || [];
   let departments;
   try {
@@ -172,20 +165,17 @@ export async function fetchLarkProfile(code) {
   const departmentNames = departments.map(departmentDisplayName).filter(Boolean);
   const isDepartmentLeader = departments.some(
     (d) =>
-      d.leader_user_id === info.open_id ||
-      (d.leaders || []).some((l) => l.leaderID === info.open_id)
+      d.leader_user_id === openId ||
+      (d.leaders || []).some((l) => l.leaderID === openId)
   );
 
-  // 4. Supervisor: atasan langsung (leader_user_id). Bila kosong di Lark, jatuh ke
-  //    LEADER DEPARTEMEN pemohon (tiap divisi punya supervisor) — selama bukan diri
-  //    sendiri. Ini menutup kasus di mana HR hanya menetapkan leader departemen,
-  //    bukan field "direct manager" per karyawan.
+  // Supervisor: atasan langsung (leader_user_id); bila kosong, jatuh ke leader departemen.
   let supervisorId = contact.leader_user_id || '';
   if (!supervisorId) {
     for (const d of departments) {
       const primary = (d.leaders || []).find((l) => l.leaderType === 1) || (d.leaders || [])[0];
       const deptLeader = d.leader_user_id || primary?.leaderID || '';
-      if (deptLeader && deptLeader !== info.open_id) {
+      if (deptLeader && deptLeader !== openId) {
         supervisorId = deptLeader;
         break;
       }
@@ -202,19 +192,19 @@ export async function fetchLarkProfile(code) {
     }
   }
 
-  const email = contact.enterprise_email || contact.email || info.email || '';
+  const email = contact.enterprise_email || contact.email || info?.email || '';
   const role = resolveRole({
-    larkUserId: info.open_id,
-    emails: [contact.enterprise_email, contact.email, info.email].filter(Boolean),
+    larkUserId: openId,
+    emails: [contact.enterprise_email, contact.email, info?.email].filter(Boolean),
     departmentNames,
     jobTitle: contact.job_title || '',
     isDepartmentLeader,
   });
 
   return {
-    lark_user_id: info.open_id,
-    union_id: info.union_id || '',
-    name: contact.name || info.name || '',
+    lark_user_id: openId,
+    union_id: info?.union_id || contact.union_id || '',
+    name: contact.name || info?.name || '',
     email,
     employee_no: contact.employee_no || '',
     job_title: contact.job_title || '',
@@ -224,6 +214,27 @@ export async function fetchLarkProfile(code) {
     leader_name: leaderName,
     role,
     is_supervisor: isDepartmentLeader,
-    avatar_url: info.avatar_url || contact.avatar?.avatar_240 || '',
+    avatar_url: info?.avatar_url || contact.avatar?.avatar_240 || '',
   };
+}
+
+/**
+ * Alur lengkap SSO: code → user_access_token → identitas dasar →
+ * data organisasi via Contact API → profil ternormalisasi.
+ */
+export async function fetchLarkProfile(code) {
+  const userToken = await exchangeCodeForUserToken(code);
+  const info = await larkGet('/open-apis/authen/v1/user_info', userToken);
+  const tenantToken = await getTenantAccessToken();
+  return buildProfileFromOpenId(info.open_id, tenantToken, info);
+}
+
+/**
+ * Refresh profil TANPA OAuth ulang: cukup pakai open_id (dari session yang masih
+ * valid) + tenant token. Dipakai tombol "Reset Session" untuk mengambil ulang
+ * role/atasan/departemen terbaru dari Lark tanpa redirect login.
+ */
+export async function refreshProfileByOpenId(openId) {
+  const tenantToken = await getTenantAccessToken();
+  return buildProfileFromOpenId(openId, tenantToken, null);
 }

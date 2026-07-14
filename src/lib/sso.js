@@ -1,15 +1,12 @@
-import { fetchLarkProfile } from './lark';
+import { fetchLarkProfile, refreshProfileByOpenId } from './lark';
 import { upsertUser, hasSubordinates } from './users';
 import { createSessionToken, setSessionCookie } from './auth';
 
 /**
- * Selesaikan login SSO dari authorization code Lark:
- * ambil profil + struktur org → auto-provision/sinkron ke tabel users →
- * terbitkan session cookie aplikasi. Return profil untuk respons/redirect.
+ * Finalisasi session dari profil Lark: lengkapi is_supervisor, auto-provision/
+ * sinkron ke tabel users, lalu terbitkan session cookie aplikasi.
  */
-export async function loginWithCode(code, res) {
-  const profile = await fetchLarkProfile(code);
-
+async function finalizeSession(profile, res) {
   // Supervisor = leader departemen di Lark ATAU ada karyawan yang melapor ke user
   // ini (leader_user_id). Penanda ini menentukan akses menu Approval.
   if (!profile.is_supervisor) {
@@ -28,4 +25,20 @@ export async function loginWithCode(code, res) {
   const token = await createSessionToken(profile);
   setSessionCookie(res, token);
   return profile;
+}
+
+/** Login SSO dari authorization code Lark. */
+export async function loginWithCode(code, res) {
+  const profile = await fetchLarkProfile(code);
+  return finalizeSession(profile, res);
+}
+
+/**
+ * Reset/refresh session tanpa OAuth ulang — ambil ulang data organisasi terbaru
+ * dari Lark (role, atasan, departemen) memakai open_id session yang masih valid,
+ * lalu terbitkan session cookie baru.
+ */
+export async function refreshSession(openId, res) {
+  const profile = await refreshProfileByOpenId(openId);
+  return finalizeSession(profile, res);
 }

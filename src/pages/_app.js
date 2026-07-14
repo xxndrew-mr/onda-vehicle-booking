@@ -4,8 +4,8 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { AuthProvider } from '../components/AuthContext'
 
-// Halaman "berdiri sendiri" tanpa navbar/footer (keluar & error login).
-const BARE_PAGES = ['/keluar', '/auth-error']
+// Halaman "berdiri sendiri" tanpa navbar/footer (error login).
+const BARE_PAGES = ['/auth-error']
 
 function MyApp({ Component, pageProps }) {
   const { pathname } = useRouter()

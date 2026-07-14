@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Car, CalendarDays, ClipboardCheck, Truck, History, LogOut, User } from 'lucide-react';
+import { Car, CalendarDays, ClipboardCheck, Truck, History, RotateCcw, User } from 'lucide-react';
 // ShieldCheck (menu Security) dinonaktifkan sementara — lihat link di bawah.
 import { useAuth } from './AuthContext';
 
@@ -16,8 +16,7 @@ const ROLE_LABELS = {
 export default function Navbar() {
   const { pathname } = useRouter();
   const { user } = useAuth();
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   // Menu Approval hanya untuk yang benar-benar bisa menyetujui:
   // supervisor (leader divisi di Lark / punya bawahan) atau GA/Admin.
@@ -35,16 +34,17 @@ export default function Navbar() {
     // { href: '/security', label: 'Security', icon: ShieldCheck, show: true },
   ].filter((l) => l.show);
 
-  const doLogout = async () => {
-    setLoggingOut(true);
+  // Reset Session: ambil ulang data terbaru dari Lark (role/atasan/departemen)
+  // tanpa login ulang. Overlay loading tampil seketika sebagai feedback.
+  const resetSession = async () => {
+    if (resetting) return;
+    setResetting(true);
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/refresh', { method: 'POST' });
     } catch {
-      // abaikan — tetap arahkan ke halaman keluar
+      // abaikan — reload tetap dilakukan agar UI kembali sinkron
     }
-    // assign() selalu navigasi (beda dari href ke URL yang sama);
-    // /keluar dikecualikan dari proxy & auto-login sehingga tidak masuk lagi otomatis.
-    window.location.assign('/keluar');
+    window.location.reload(); // muat ulang dengan session terbaru
   };
 
   return (
@@ -92,12 +92,13 @@ export default function Navbar() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setConfirmOpen(true)}
-                  title="Keluar"
-                  className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition text-sm"
+                  onClick={resetSession}
+                  disabled={resetting}
+                  title="Reset Session — ambil ulang data terbaru dari Lark"
+                  className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition text-sm disabled:opacity-60"
                 >
-                  <LogOut size={16} />
-                  <span className="hidden sm:inline">Keluar</span>
+                  <RotateCcw size={16} className={resetting ? 'animate-spin' : ''} />
+                  <span className="hidden sm:inline">Reset Session</span>
                 </button>
               </div>
             )}
@@ -106,35 +107,13 @@ export default function Navbar() {
       </nav>
     </header>
 
-    {/* Konfirmasi keluar — muncul SEKETIKA saat tombol ditekan (feedback instan). */}
-    {confirmOpen && (
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-[60]">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-gray-800">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="grid place-items-center w-10 h-10 rounded-full bg-red-50 text-red-600 shrink-0">
-              <LogOut size={20} />
-            </span>
-            <h2 className="text-lg font-bold">Keluar dari aplikasi?</h2>
-          </div>
-          <p className="text-sm text-gray-600 mb-5">
-            Session Anda akan diakhiri. Untuk masuk kembali, Anda perlu login ulang lewat Lark.
-          </p>
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setConfirmOpen(false)}
-              disabled={loggingOut}
-              className="px-4 py-2 rounded-md border text-gray-700 hover:bg-gray-50 transition"
-            >
-              Batal
-            </button>
-            <button
-              onClick={doLogout}
-              disabled={loggingOut}
-              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-60"
-            >
-              {loggingOut ? 'Keluar…' : 'Ya, Keluar'}
-            </button>
-          </div>
+    {/* Overlay loading — muncul SEKETIKA saat Reset Session ditekan (feedback instan). */}
+    {resetting && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
+        <div className="bg-white rounded-xl shadow-xl px-8 py-7 flex flex-col items-center gap-3 text-gray-800">
+          <RotateCcw size={30} className="animate-spin text-blue-700" />
+          <p className="font-semibold">Mereset session…</p>
+          <p className="text-xs text-gray-500">Mengambil data terbaru dari Lark</p>
         </div>
       </div>
     )}
