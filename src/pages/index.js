@@ -28,6 +28,9 @@ const pad = (n) => String(n).padStart(2, '0');
 const toLocalInput = (d) =>
   `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const toLocalDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const DOW = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const isSameDay = (a, b) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 export default function Home() {
   const { user } = useAuth();
@@ -157,6 +160,12 @@ export default function Home() {
   const selectedVehicle = slotVehicles.find((v) => v.id === modalVehicleId) || null;
   const shiftDay = (n) => setDate((d) => startOfDay(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)));
 
+  // Minggu (Min–Sab) yang memuat hari terpilih — untuk strip hari di mobile.
+  const weekDays = useMemo(() => {
+    const sun = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+    return Array.from({ length: 7 }, (_, i) => new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + i));
+  }, [date]);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-4">
       <PageHeader
@@ -177,8 +186,9 @@ export default function Home() {
         </div>
       )}
 
-      <Reveal className="panel">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 border-b border-[var(--line)]">
+      <Reveal className="panel overflow-hidden">
+        {/* Navigasi tanggal — desktop */}
+        <div className="hidden sm:flex flex-wrap items-center gap-3 px-5 py-3 border-b border-[var(--line)]">
           <Button variant="ghost" size="sm" onClick={() => setDate(startOfDay(new Date()))}>
             Hari Ini
           </Button>
@@ -212,7 +222,48 @@ export default function Home() {
           </span>
         </div>
 
-        <div className="p-3 sm:p-5">
+        {/* Navigasi tanggal — mobile: strip minggu ala Lark */}
+        <div className="sm:hidden px-4 py-3 border-b border-[var(--line)]">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-display text-lg text-[var(--ink)] capitalize">
+              {date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+            </span>
+            <button
+              onClick={() => setDate(startOfDay(new Date()))}
+              className="mono text-[10px] uppercase tracking-[0.12em] text-[var(--blue)]"
+            >
+              Hari Ini
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {weekDays.map((d) => {
+              const selected = isSameDay(d, date);
+              const today = isSameDay(d, new Date());
+              return (
+                <button
+                  key={toLocalDate(d)}
+                  onClick={() => setDate(startOfDay(d))}
+                  className="flex flex-col items-center gap-1 py-0.5"
+                >
+                  <span className="mono text-[9px] uppercase tracking-[0.08em] text-[var(--muted)]">{DOW[d.getDay()]}</span>
+                  <span
+                    className={`w-8 h-8 grid place-items-center rounded-full text-sm num ${
+                      selected
+                        ? 'bg-[var(--brand)] text-white font-semibold'
+                        : today
+                        ? 'text-[var(--blue)] font-semibold'
+                        : 'text-[var(--ink)]'
+                    }`}
+                  >
+                    {d.getDate()}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="sm:p-5">
           <VehicleTimeline
             vehicles={vehicles}
             events={events}
