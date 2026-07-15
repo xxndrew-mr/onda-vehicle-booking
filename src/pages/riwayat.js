@@ -206,7 +206,7 @@ export default function Riwayat() {
                     <div key={b.id} className="rounded-[10px] border border-[var(--line)] p-3.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-medium text-[var(--ink)] truncate">{b.vehicle_name}</div>
+                          <div className="font-medium text-[var(--ink)] break-words">{b.vehicle_name}</div>
                           {b.license_plate && <div className="mono text-[11px] text-[var(--muted)]">{b.license_plate}</div>}
                         </div>
                         <StatusBadge status={b.status} />
@@ -330,7 +330,7 @@ export default function Riwayat() {
                     <div key={b.id} className="rounded-[10px] border border-[var(--line)] p-3.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-medium text-[var(--ink)] truncate">{b.vehicle_name}</div>
+                          <div className="font-medium text-[var(--ink)] break-words">{b.vehicle_name}</div>
                           {b.license_plate && <div className="mono text-[11px] text-[var(--muted)]">{b.license_plate}</div>}
                         </div>
                         <StatusBadge status={b.status} />
@@ -338,7 +338,7 @@ export default function Riwayat() {
                       <div className="mt-2.5 flex items-center gap-2">
                         <Avatar src={b.requester_avatar} name={b.user_name} size={26} />
                         <div className="min-w-0">
-                          <div className="text-sm text-[var(--ink-2)] truncate">{b.user_name}</div>
+                          <div className="text-sm text-[var(--ink-2)] break-words">{b.user_name}</div>
                         </div>
                         {b.requester_department && <span className="badge badge--blue shrink-0">{b.requester_department}</span>}
                       </div>
@@ -348,7 +348,7 @@ export default function Riwayat() {
                       </div>
                       <div className="mt-2.5 pt-2.5 border-t border-[var(--line)] space-y-1">
                         {recordedActions(b).map((a) => (
-                          <div key={a.stage} className="flex items-center gap-1.5 text-xs">
+                          <div key={a.stage} className="flex items-center gap-1.5 text-xs flex-wrap">
                             {a.approved ? (
                               <Check size={13} className="text-[var(--blue)] shrink-0" />
                             ) : (
@@ -360,6 +360,7 @@ export default function Riwayat() {
                                 <>oleh <Person name={a.by} openId={a.byId} size={16} /></>
                               ) : null}
                             </span>
+                            <span className="text-[var(--muted)]">· {fmtTs(a.at)}</span>
                           </div>
                         ))}
                       </div>

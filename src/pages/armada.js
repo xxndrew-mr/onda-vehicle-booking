@@ -167,6 +167,7 @@ export default function Armada() {
                       <td><StatusBadge status={v.status} /></td>
                       <td>
                         <select
+                          aria-label="Ubah status"
                           value={v.status || 'Ready'}
                           onChange={(e) => changeStatus(v, e.target.value)}
                           className="field text-sm !min-h-0 py-1.5 max-w-[10rem]"
@@ -208,6 +209,7 @@ export default function Armada() {
                   )}
                   <div className="mt-3 flex items-center gap-2">
                     <select
+                      aria-label="Ubah status"
                       value={v.status || 'Ready'}
                       onChange={(e) => changeStatus(v, e.target.value)}
                       className="field text-sm !min-h-0 py-2 flex-1"
