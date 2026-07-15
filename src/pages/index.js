@@ -226,7 +226,7 @@ export default function Home() {
       </Reveal>
 
       {draft && (
-        <div className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-[var(--ink)]/40 flex items-center justify-center p-4 z-50">
           <div className="panel w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" data-lenis-prevent>
             <h2 className="font-display text-2xl text-[var(--ink)] mb-5">Ajukan Booking</h2>
 
@@ -328,7 +328,7 @@ export default function Home() {
       )}
 
       {detail && (
-        <div className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-[var(--ink)]/40 flex items-center justify-center p-4 z-50">
           <div className="panel w-full max-w-md p-6">
             <h2 className="font-display text-2xl text-[var(--ink)] mb-4">Detail Booking</h2>
             <div className="text-sm text-[var(--ink-2)] space-y-2.5 mb-5">

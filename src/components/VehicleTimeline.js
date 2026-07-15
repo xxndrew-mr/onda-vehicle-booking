@@ -26,10 +26,11 @@ const pad = (n) => String(n).padStart(2, '0');
 const fmtMin = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
 const clampMin = (m) => Math.max(0, Math.min(DAY_MIN, m));
 
-// Latar grid: garis tiap jam + garis tipis tiap 30 menit.
+// Latar grid ala Lark: garis vertikal JELAS tiap jam (--grid) + garis tipis
+// tiap 30 menit (--line-2). Bersama border-b tiap baris → kotak per jam.
 const GRID_BG = {
   backgroundImage:
-    `repeating-linear-gradient(to right, var(--line) 0, var(--line) 1px, transparent 1px, transparent ${HOUR_W}px),` +
+    `repeating-linear-gradient(to right, var(--grid) 0, var(--grid) 1px, transparent 1px, transparent ${HOUR_W}px),` +
     `repeating-linear-gradient(to right, transparent 0, transparent ${HOUR_W / 2}px, var(--line-2) ${HOUR_W / 2}px, var(--line-2) ${HOUR_W / 2 + 1}px, transparent ${HOUR_W / 2 + 1}px, transparent ${HOUR_W}px)`,
 };
 
@@ -134,7 +135,7 @@ export default function VehicleTimeline({ vehicles, events, date, eventColor, on
             >
               <span className="mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">Kendaraan</span>
             </div>
-            <div className="relative h-8 border-b border-[var(--line)]" style={{ width: 24 * HOUR_W, ...GRID_BG }}>
+            <div className="relative h-8 border-b border-[var(--grid)]" style={{ width: 24 * HOUR_W, ...GRID_BG }}>
               {Array.from({ length: 24 }, (_, h) => (
                 <span
                   key={h}
@@ -171,7 +172,7 @@ export default function VehicleTimeline({ vehicles, events, date, eventColor, on
                   </div>
                 </div>
                 <div
-                  className={`relative border-b border-[var(--line)] ${
+                  className={`relative border-b border-[var(--grid)] ${
                     ready ? 'cursor-crosshair' : 'bg-[var(--mist)]/60 cursor-not-allowed'
                   }`}
                   style={{ width: 24 * HOUR_W, height: ROW_H, touchAction: 'pan-x pan-y', ...GRID_BG }}

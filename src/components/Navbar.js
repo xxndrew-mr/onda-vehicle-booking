@@ -122,7 +122,7 @@ export default function Navbar() {
 
     {/* Overlay loading — muncul SEKETIKA saat Reset Session ditekan (feedback instan). */}
     {resetting && (
-      <div className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+      <div className="fixed inset-0 bg-[var(--ink)]/40 flex items-center justify-center p-4 z-[60]">
         <div className="panel px-9 py-8 flex flex-col items-center gap-3 text-center">
           <RotateCcw size={26} className="animate-spin text-[var(--blue)]" />
           <p className="label text-[var(--ink)]">Mereset session</p>

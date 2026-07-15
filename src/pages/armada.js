@@ -194,7 +194,7 @@ export default function Armada() {
       </p>
 
       {form && (
-        <div className="fixed inset-0 bg-[var(--ink)]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-[var(--ink)]/40 flex items-center justify-center p-4 z-50">
           <div className="panel w-full max-w-md p-6">
             <h2 className="font-display text-2xl text-[var(--ink)] mb-5">
               {form.id ? 'Edit Kendaraan' : 'Tambah Kendaraan'}

@@ -4,7 +4,7 @@
 :root {
   --paper: #FFFFFF; --mist: #F4F6FC;
   --ink: #0B1020; --ink-2: #5A6178; --muted: #9A9FB0;
-  --line: #E6E9F3; --line-2: #F0F2F8;
+  --line: #E6E9F3; --line-2: #F0F2F8; --grid: #D5DBEA;
   --blue: #1B3BF5; --blue-ink: #0E2296; --blue-wash: #EEF1FE;
   --brand: #005DA6; --brand-deep: #004A85; /* biru brand — navbar & footer (rata) */
   --danger: #C0392B; --danger-wash: #FBEDEC; --danger-line: #F0CFCB;
@@ -26,7 +26,7 @@
 :root[data-theme="dark"] {
   --paper: #0B0F1A; --mist: #161C2B;
   --ink: #EEF1F8; --ink-2: #AAB2C6; --muted: #7E8698;
-  --line: #242C3E; --line-2: #171E2C;
+  --line: #242C3E; --line-2: #171E2C; --grid: #2C3548;
   --blue: #6E8BFF; --blue-ink: #90A6FF; --blue-wash: rgba(110, 139, 255, 0.16);
   --danger: #F5766B; --danger-wash: rgba(245, 118, 107, 0.15); --danger-line: rgba(245, 118, 107, 0.34);
   --ok: #56D08A; --ok-wash: rgba(86, 208, 138, 0.15); --ok-line: rgba(86, 208, 138, 0.34);
