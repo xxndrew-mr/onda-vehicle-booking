@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { CalendarDays, ClipboardCheck, Truck, History, RotateCcw, Sun, Moon } from 'lucide-react';
+import { CalendarDays, ClipboardCheck, Truck, History, RotateCcw, Sun, Moon, Menu, X } from 'lucide-react';
 // ShieldCheck (menu Security) dinonaktifkan sementara — lihat link di bawah.
 import { useAuth } from './AuthContext';
 import { useTheme } from './ThemeContext';
@@ -16,10 +16,12 @@ const ROLE_LABELS = {
 };
 
 export default function Navbar() {
-  const { pathname } = useRouter();
+  const router = useRouter();
+  const { pathname } = router;
   const { user } = useAuth();
   const { theme, toggle } = useTheme();
   const [resetting, setResetting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Menu Approval hanya untuk yang benar-benar bisa menyetujui:
   // supervisor (leader divisi di Lark / punya bawahan) atau GA/Admin.
@@ -37,6 +39,13 @@ export default function Navbar() {
     // { href: '/security', label: 'Security', icon: ShieldCheck, show: true },
   ].filter((l) => l.show);
 
+  // Tutup drawer mobile tiap selesai pindah halaman (via event router).
+  useEffect(() => {
+    const close = () => setMenuOpen(false);
+    router.events.on('routeChangeComplete', close);
+    return () => router.events.off('routeChangeComplete', close);
+  }, [router.events]);
+
   // Reset Session: ambil ulang data terbaru dari Lark (role/atasan/departemen)
   // tanpa login ulang. Overlay loading tampil seketika sebagai feedback.
   const resetSession = async () => {
@@ -53,10 +62,10 @@ export default function Navbar() {
   return (
     <>
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
-      <nav className="max-w-6xl mx-auto nav-surface backdrop-blur-md ring-1 ring-white/10 rounded-[var(--radius)] shadow-[0_18px_44px_-24px_rgba(14,34,150,0.65)]">
+      <nav className="max-w-6xl mx-auto nav-surface backdrop-blur-md ring-1 ring-white/10 rounded-[var(--radius)] shadow-[0_18px_44px_-24px_rgba(14,34,150,0.65)] overflow-hidden">
         <div className="px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
           {/* Brand — logo di chip putih agar kontras di atas navbar biru */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0" onClick={() => setMenuOpen(false)}>
             <span className="grid place-items-center w-9 h-9 rounded-xl bg-white p-1 shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-login.png" alt="Logo PT Onda Mega Integra" className="w-full h-full object-contain" />
@@ -64,8 +73,8 @@ export default function Navbar() {
             <span className="hidden lg:block font-display text-[17px] text-white leading-none">PT Onda Mega Integra</span>
           </Link>
 
-          {/* Menu — label lebih besar & jelas (dibaca lintas usia) */}
-          <div className="flex items-center gap-1">
+          {/* Menu inline — desktop saja */}
+          <div className="hidden md:flex items-center gap-1">
             {links.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -78,12 +87,12 @@ export default function Navbar() {
                 }`}
               >
                 <Icon size={17} />
-                <span className="hidden md:inline">{label}</span>
+                <span>{label}</span>
               </Link>
             ))}
           </div>
 
-          {/* Kanan: toggle tema (selalu tampil) + user/reset */}
+          {/* Kanan: toggle tema (selalu) + user (desktop) + hamburger (mobile) */}
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={(e) => toggle(e)}
@@ -95,8 +104,8 @@ export default function Navbar() {
             </button>
 
             {user && (
-              <div className="flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-white/20">
-                <div className="text-right leading-tight hidden md:block max-w-[10rem]">
+              <div className="hidden md:flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-white/20">
+                <div className="text-right leading-tight max-w-[10rem]">
                   <div className="text-sm font-semibold text-white truncate">{user.name}</div>
                   <div className="text-[11px] text-white/70 truncate">
                     {ROLE_LABELS[user.role] || user.role}
@@ -114,8 +123,63 @@ export default function Navbar() {
                 </button>
               </div>
             )}
+
+            {/* Hamburger — mobile saja */}
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Menu"
+              aria-expanded={menuOpen}
+              className="md:hidden grid place-items-center w-9 h-9 rounded-full border border-white/30 text-white/90 hover:bg-white/15 hover:text-white transition"
+            >
+              {menuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
           </div>
         </div>
+
+        {/* Drawer mobile */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-white/15 px-2 py-2">
+            {user && (
+              <div className="flex items-center gap-3 px-2 py-2.5">
+                <Avatar src={user.avatar} name={user.name} size={38} className="ring-2 ring-white/30" />
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-white truncate">{user.name}</div>
+                  <div className="text-[11px] text-white/70 truncate">
+                    {ROLE_LABELS[user.role] || user.role}
+                    {user.department ? ` · ${user.department}` : ''}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-1 space-y-0.5">
+              {links.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${
+                    pathname === href
+                      ? 'bg-white text-[var(--brand-deep)]'
+                      : 'text-white/90 hover:bg-white/15'
+                  }`}
+                >
+                  <Icon size={18} /> {label}
+                </Link>
+              ))}
+            </div>
+
+            {user && (
+              <button
+                onClick={resetSession}
+                disabled={resetting}
+                className="mt-1 w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium text-white/90 hover:bg-white/15 transition disabled:opacity-60"
+              >
+                <RotateCcw size={18} className={resetting ? 'animate-spin' : ''} /> Reset Session
+              </button>
+            )}
+          </div>
+        )}
       </nav>
     </header>
 

@@ -144,59 +144,92 @@ export default function Riwayat() {
                   : 'Tidak ada hasil untuk pencarian ini.'}
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm data-table">
-                  <thead>
-                    <tr className="text-left text-[var(--muted)] border-b">
-                      <th className="py-2 pr-4 font-medium">Kendaraan</th>
-                      <th className="py-2 pr-4 font-medium">Waktu Pakai</th>
-                      <th className="py-2 pr-4 font-medium">Keperluan</th>
-                      <th className="py-2 pr-4 font-medium">Diajukan</th>
-                      <th className="py-2 pr-4 font-medium">Status</th>
-                      <th className="py-2 font-medium"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {minePage.pageItems.map((b) => (
-                      <tr key={b.id}>
-                        <td className="py-3 pr-4">
-                          <div className="font-medium text-[var(--ink)]">{b.vehicle_name}</div>
-                          {b.license_plate && (
-                            <div className="text-xs text-[var(--muted)]">{b.license_plate}</div>
-                          )}
-                        </td>
-                        <td className="py-3 pr-4 whitespace-nowrap text-[var(--ink-2)]">
-                          {fmtTs(b.start_time)}
-                          <div className="text-xs text-[var(--muted)]">s/d {fmtTs(b.end_time)}</div>
-                        </td>
-                        <td className="py-3 pr-4 text-[var(--ink-2)] max-w-[16rem]">
-                          <div className="truncate" title={b.purpose}>{b.purpose}</div>
-                        </td>
-                        <td className="py-3 pr-4 whitespace-nowrap text-[var(--muted)]">
-                          {fmtTs(b.created_at)}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <StatusBadge status={b.status} />
-                          <div className="text-xs text-[var(--muted)] mt-1"><AuditLine b={b} /></div>
-                          {vehicleChangeNote(b) && (
-                            <div className="text-xs text-[var(--danger)] mt-1">{vehicleChangeNote(b)}</div>
-                          )}
-                        </td>
-                        <td className="py-3 whitespace-nowrap text-right">
-                          {ACTIVE_STATUSES.includes(b.status) && (
-                            <button
-                              onClick={() => cancelBooking(b.id)}
-                              className="text-[var(--danger)] hover:underline text-xs font-medium"
-                            >
-                              Batalkan
-                            </button>
-                          )}
-                        </td>
+              <>
+                {/* Desktop: tabel */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm data-table">
+                    <thead>
+                      <tr className="text-left text-[var(--muted)] border-b">
+                        <th className="py-2 pr-4 font-medium">Kendaraan</th>
+                        <th className="py-2 pr-4 font-medium">Waktu Pakai</th>
+                        <th className="py-2 pr-4 font-medium">Keperluan</th>
+                        <th className="py-2 pr-4 font-medium">Diajukan</th>
+                        <th className="py-2 pr-4 font-medium">Status</th>
+                        <th className="py-2 font-medium"></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {minePage.pageItems.map((b) => (
+                        <tr key={b.id}>
+                          <td className="py-3 pr-4">
+                            <div className="font-medium text-[var(--ink)]">{b.vehicle_name}</div>
+                            {b.license_plate && (
+                              <div className="text-xs text-[var(--muted)]">{b.license_plate}</div>
+                            )}
+                          </td>
+                          <td className="py-3 pr-4 whitespace-nowrap text-[var(--ink-2)]">
+                            {fmtTs(b.start_time)}
+                            <div className="text-xs text-[var(--muted)]">s/d {fmtTs(b.end_time)}</div>
+                          </td>
+                          <td className="py-3 pr-4 text-[var(--ink-2)] max-w-[16rem]">
+                            <div className="truncate" title={b.purpose}>{b.purpose}</div>
+                          </td>
+                          <td className="py-3 pr-4 whitespace-nowrap text-[var(--muted)]">
+                            {fmtTs(b.created_at)}
+                          </td>
+                          <td className="py-3 pr-4">
+                            <StatusBadge status={b.status} />
+                            <div className="text-xs text-[var(--muted)] mt-1"><AuditLine b={b} /></div>
+                            {vehicleChangeNote(b) && (
+                              <div className="text-xs text-[var(--danger)] mt-1">{vehicleChangeNote(b)}</div>
+                            )}
+                          </td>
+                          <td className="py-3 whitespace-nowrap text-right">
+                            {ACTIVE_STATUSES.includes(b.status) && (
+                              <button
+                                onClick={() => cancelBooking(b.id)}
+                                className="text-[var(--danger)] hover:underline text-xs font-medium"
+                              >
+                                Batalkan
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile: kartu */}
+                <div className="md:hidden space-y-3">
+                  {minePage.pageItems.map((b) => (
+                    <div key={b.id} className="rounded-[10px] border border-[var(--line)] p-3.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-medium text-[var(--ink)] truncate">{b.vehicle_name}</div>
+                          {b.license_plate && <div className="mono text-[11px] text-[var(--muted)]">{b.license_plate}</div>}
+                        </div>
+                        <StatusBadge status={b.status} />
+                      </div>
+                      <div className="mt-2.5 space-y-1 text-xs">
+                        <div className="text-[var(--ink-2)]"><span className="text-[var(--muted)]">Waktu: </span>{fmtTs(b.start_time)} – {fmtTs(b.end_time)}</div>
+                        <div className="text-[var(--ink-2)]"><span className="text-[var(--muted)]">Keperluan: </span>{b.purpose}</div>
+                        <div className="text-[var(--muted)]">Diajukan {fmtTs(b.created_at)}</div>
+                        <div className="text-[var(--muted)]"><AuditLine b={b} /></div>
+                        {vehicleChangeNote(b) && <div className="text-[var(--danger)]">{vehicleChangeNote(b)}</div>}
+                      </div>
+                      {ACTIVE_STATUSES.includes(b.status) && (
+                        <button
+                          onClick={() => cancelBooking(b.id)}
+                          className="mt-3 inline-flex items-center px-3.5 py-2 rounded-full border border-[var(--danger-line)] text-[var(--danger)] mono text-[11px] uppercase tracking-[0.1em] font-bold hover:bg-[var(--danger-wash)] transition-colors"
+                        >
+                          Batalkan
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
             <Pagination page={minePage.page} totalPages={minePage.totalPages} total={minePage.total} onChange={minePage.setPage} />
           </div>
@@ -221,73 +254,119 @@ export default function Riwayat() {
                   : 'Tidak ada hasil untuk pencarian ini.'}
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm data-table">
-                  <thead>
-                    <tr className="text-left text-[var(--muted)] border-b">
-                      <th className="py-2 pr-4 font-medium">Kendaraan</th>
-                      <th className="py-2 pr-4 font-medium">Pemohon</th>
-                      <th className="py-2 pr-4 font-medium">Waktu Pakai</th>
-                      <th className="py-2 pr-4 font-medium">Keperluan</th>
-                      <th className="py-2 pr-4 font-medium">Status Akhir</th>
-                      <th className="py-2 font-medium">Aksi Tercatat</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {procPage.pageItems.map((b) => (
-                      <tr key={b.id}>
-                        <td className="py-3 pr-4">
-                          <div className="font-medium text-[var(--ink)]">{b.vehicle_name}</div>
-                          {b.license_plate && (
-                            <div className="text-xs text-[var(--muted)]">{b.license_plate}</div>
-                          )}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <div className="flex items-center gap-2">
-                            <Avatar src={b.requester_avatar} name={b.user_name} size={28} />
-                            <div>
-                              <div className="text-[var(--ink-2)]">{b.user_name}</div>
-                              {b.requester_department && (
-                                <span className="badge badge--blue">
-                                  {b.requester_department}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 pr-4 whitespace-nowrap text-[var(--ink-2)]">
-                          {fmtTs(b.start_time)}
-                          <div className="text-xs text-[var(--muted)]">s/d {fmtTs(b.end_time)}</div>
-                        </td>
-                        <td className="py-3 pr-4 text-[var(--ink-2)] max-w-[14rem]">
-                          <div className="truncate" title={b.purpose}>{b.purpose}</div>
-                        </td>
-                        <td className="py-3 pr-4">
-                          <StatusBadge status={b.status} />
-                        </td>
-                        <td className="py-3 space-y-1">
-                          {recordedActions(b).map((a) => (
-                            <div key={a.stage} className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-                              {a.approved ? (
-                                <Check size={13} className="text-[var(--blue)] shrink-0" />
-                              ) : (
-                                <X size={13} className="text-[var(--danger)] shrink-0" />
-                              )}
-                              <span className="text-[var(--ink-2)] inline-flex items-center gap-1">
-                                {a.stage}: {a.approved ? 'Disetujui' : 'Ditolak'}
-                                {a.by ? (
-                                  <>oleh <Person name={a.by} openId={a.byId} size={16} /></>
-                                ) : null}
-                              </span>
-                              <span className="text-[var(--muted)]">· {fmtTs(a.at)}</span>
-                            </div>
-                          ))}
-                        </td>
+              <>
+                {/* Desktop: tabel */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm data-table">
+                    <thead>
+                      <tr className="text-left text-[var(--muted)] border-b">
+                        <th className="py-2 pr-4 font-medium">Kendaraan</th>
+                        <th className="py-2 pr-4 font-medium">Pemohon</th>
+                        <th className="py-2 pr-4 font-medium">Waktu Pakai</th>
+                        <th className="py-2 pr-4 font-medium">Keperluan</th>
+                        <th className="py-2 pr-4 font-medium">Status Akhir</th>
+                        <th className="py-2 font-medium">Aksi Tercatat</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {procPage.pageItems.map((b) => (
+                        <tr key={b.id}>
+                          <td className="py-3 pr-4">
+                            <div className="font-medium text-[var(--ink)]">{b.vehicle_name}</div>
+                            {b.license_plate && (
+                              <div className="text-xs text-[var(--muted)]">{b.license_plate}</div>
+                            )}
+                          </td>
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                              <Avatar src={b.requester_avatar} name={b.user_name} size={28} />
+                              <div>
+                                <div className="text-[var(--ink-2)]">{b.user_name}</div>
+                                {b.requester_department && (
+                                  <span className="badge badge--blue">
+                                    {b.requester_department}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4 whitespace-nowrap text-[var(--ink-2)]">
+                            {fmtTs(b.start_time)}
+                            <div className="text-xs text-[var(--muted)]">s/d {fmtTs(b.end_time)}</div>
+                          </td>
+                          <td className="py-3 pr-4 text-[var(--ink-2)] max-w-[14rem]">
+                            <div className="truncate" title={b.purpose}>{b.purpose}</div>
+                          </td>
+                          <td className="py-3 pr-4">
+                            <StatusBadge status={b.status} />
+                          </td>
+                          <td className="py-3 space-y-1">
+                            {recordedActions(b).map((a) => (
+                              <div key={a.stage} className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                                {a.approved ? (
+                                  <Check size={13} className="text-[var(--blue)] shrink-0" />
+                                ) : (
+                                  <X size={13} className="text-[var(--danger)] shrink-0" />
+                                )}
+                                <span className="text-[var(--ink-2)] inline-flex items-center gap-1">
+                                  {a.stage}: {a.approved ? 'Disetujui' : 'Ditolak'}
+                                  {a.by ? (
+                                    <>oleh <Person name={a.by} openId={a.byId} size={16} /></>
+                                  ) : null}
+                                </span>
+                                <span className="text-[var(--muted)]">· {fmtTs(a.at)}</span>
+                              </div>
+                            ))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile: kartu */}
+                <div className="md:hidden space-y-3">
+                  {procPage.pageItems.map((b) => (
+                    <div key={b.id} className="rounded-[10px] border border-[var(--line)] p-3.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-medium text-[var(--ink)] truncate">{b.vehicle_name}</div>
+                          {b.license_plate && <div className="mono text-[11px] text-[var(--muted)]">{b.license_plate}</div>}
+                        </div>
+                        <StatusBadge status={b.status} />
+                      </div>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <Avatar src={b.requester_avatar} name={b.user_name} size={26} />
+                        <div className="min-w-0">
+                          <div className="text-sm text-[var(--ink-2)] truncate">{b.user_name}</div>
+                        </div>
+                        {b.requester_department && <span className="badge badge--blue shrink-0">{b.requester_department}</span>}
+                      </div>
+                      <div className="mt-2.5 space-y-1 text-xs">
+                        <div className="text-[var(--ink-2)]"><span className="text-[var(--muted)]">Waktu: </span>{fmtTs(b.start_time)} – {fmtTs(b.end_time)}</div>
+                        <div className="text-[var(--ink-2)]"><span className="text-[var(--muted)]">Keperluan: </span>{b.purpose}</div>
+                      </div>
+                      <div className="mt-2.5 pt-2.5 border-t border-[var(--line)] space-y-1">
+                        {recordedActions(b).map((a) => (
+                          <div key={a.stage} className="flex items-center gap-1.5 text-xs">
+                            {a.approved ? (
+                              <Check size={13} className="text-[var(--blue)] shrink-0" />
+                            ) : (
+                              <X size={13} className="text-[var(--danger)] shrink-0" />
+                            )}
+                            <span className="text-[var(--ink-2)] inline-flex items-center gap-1 flex-wrap">
+                              {a.stage}: {a.approved ? 'Disetujui' : 'Ditolak'}
+                              {a.by ? (
+                                <>oleh <Person name={a.by} openId={a.byId} size={16} /></>
+                              ) : null}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
             <Pagination page={procPage.page} totalPages={procPage.totalPages} total={procPage.total} onChange={procPage.setPage} />
           </div>

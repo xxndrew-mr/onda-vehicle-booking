@@ -137,54 +137,96 @@ export default function Armada() {
         </div>
       )}
 
-      <Reveal className="panel p-4 sm:p-6 overflow-x-auto">
+      <Reveal className="panel p-4 sm:p-6">
         {vehicles.length === 0 ? (
           <p className="text-sm text-[var(--muted)] text-center py-10">Belum ada kendaraan.</p>
         ) : (
-          <table className="w-full text-sm data-table">
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Plat Nomor</th>
-                <th>Info</th>
-                <th>Status</th>
-                <th>Ubah Status</th>
-                <th className="text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop: tabel */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm data-table">
+                <thead>
+                  <tr>
+                    <th>Nama</th>
+                    <th>Plat Nomor</th>
+                    <th>Info</th>
+                    <th>Status</th>
+                    <th>Ubah Status</th>
+                    <th className="text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {veh.pageItems.map((v) => (
+                    <tr key={v.id}>
+                      <td>
+                        <div className="font-medium text-[var(--ink)]">{v.name}</div>
+                        {v.notes && <div className="text-xs text-[var(--muted)] max-w-[14rem] truncate" title={v.notes}>{v.notes}</div>}
+                      </td>
+                      <td className="text-[var(--ink-2)] num">{v.license_plate || '—'}</td>
+                      <td className="text-[var(--ink-2)]">{vehicleSpecText(v) || '—'}</td>
+                      <td><StatusBadge status={v.status} /></td>
+                      <td>
+                        <select
+                          value={v.status || 'Ready'}
+                          onChange={(e) => changeStatus(v, e.target.value)}
+                          className="field text-sm !min-h-0 py-1.5 max-w-[10rem]"
+                        >
+                          {VEHICLE_STATUSES.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="text-right">
+                        <button
+                          onClick={() => { setForm({ ...v }); setErrorMsg(''); }}
+                          className="inline-flex items-center gap-1 text-[var(--blue)] hover:underline mono text-[11px] uppercase tracking-[0.1em] font-bold"
+                        >
+                          <Pencil size={13} /> Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile: kartu */}
+            <div className="md:hidden space-y-3">
               {veh.pageItems.map((v) => (
-                <tr key={v.id}>
-                  <td>
-                    <div className="font-medium text-[var(--ink)]">{v.name}</div>
-                    {v.notes && <div className="text-xs text-[var(--muted)] max-w-[14rem] truncate" title={v.notes}>{v.notes}</div>}
-                  </td>
-                  <td className="text-[var(--ink-2)] num">{v.license_plate || '—'}</td>
-                  <td className="text-[var(--ink-2)]">{vehicleSpecText(v) || '—'}</td>
-                  <td><StatusBadge status={v.status} /></td>
-                  <td>
+                <div key={v.id} className="rounded-[10px] border border-[var(--line)] p-3.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium text-[var(--ink)] truncate">{v.name}</div>
+                      <div className="mono text-[11px] text-[var(--muted)] num mt-0.5">{v.license_plate || '—'}</div>
+                    </div>
+                    <StatusBadge status={v.status} />
+                  </div>
+                  {(vehicleSpecText(v) || v.notes) && (
+                    <div className="mt-2 text-xs text-[var(--ink-2)]">
+                      {[vehicleSpecText(v), v.notes].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
+                  <div className="mt-3 flex items-center gap-2">
                     <select
                       value={v.status || 'Ready'}
                       onChange={(e) => changeStatus(v, e.target.value)}
-                      className="field text-sm !min-h-0 py-1.5 max-w-[10rem]"
+                      className="field text-sm !min-h-0 py-2 flex-1"
                     >
                       {VEHICLE_STATUSES.map((s) => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
-                  </td>
-                  <td className="text-right">
                     <button
                       onClick={() => { setForm({ ...v }); setErrorMsg(''); }}
-                      className="inline-flex items-center gap-1 text-[var(--blue)] hover:underline mono text-[11px] uppercase tracking-[0.1em] font-bold"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[var(--line)] text-[var(--blue)] mono text-[11px] uppercase tracking-[0.1em] font-bold hover:border-[var(--ink)] transition-colors shrink-0"
                     >
                       <Pencil size={13} /> Edit
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
         <Pagination page={veh.page} totalPages={veh.totalPages} total={veh.total} onChange={veh.setPage} />
       </Reveal>

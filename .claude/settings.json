@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"d:/Documents/Andre/Work Project/car-booking-system\" diff -- src/components/Navbar.js)"
+    ]
+  }
+}
