@@ -6,6 +6,7 @@ import { ReactLenis } from 'lenis/react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { AuthProvider } from '../components/AuthContext'
+import { ThemeProvider } from '../components/ThemeContext'
 
 const display = Bricolage_Grotesque({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-bricolage', display: 'swap' })
 const mono = Space_Mono({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-space-mono', display: 'swap' })
@@ -30,15 +31,17 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <ReactLenis root options={{ duration: 1.1, smoothWheel: !reduce }}>
-      <AuthProvider>
-        <div className={`${display.variable} ${mono.variable} ${body.variable} app-root flex flex-col min-h-screen bg-[var(--paper)] text-[var(--ink)]`}>
-          {!bare && <Navbar />}
-          <main className="flex-1">
-            <Component {...pageProps} />
-          </main>
-          {!bare && <Footer />}
-        </div>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <div className={`${display.variable} ${mono.variable} ${body.variable} app-root flex flex-col min-h-screen bg-[var(--paper)] text-[var(--ink)]`}>
+            {!bare && <Navbar />}
+            <main className="flex-1">
+              <Component {...pageProps} />
+            </main>
+            {!bare && <Footer />}
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
     </ReactLenis>
   )
 }

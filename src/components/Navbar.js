@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { CalendarDays, ClipboardCheck, Truck, History, RotateCcw } from 'lucide-react';
+import { CalendarDays, ClipboardCheck, Truck, History, RotateCcw, Sun, Moon } from 'lucide-react';
 // ShieldCheck (menu Security) dinonaktifkan sementara — lihat link di bawah.
 import { useAuth } from './AuthContext';
+import { useTheme } from './ThemeContext';
 import Avatar from './Avatar';
 
 const ROLE_LABELS = {
@@ -17,6 +18,7 @@ const ROLE_LABELS = {
 export default function Navbar() {
   const { pathname } = useRouter();
   const { user } = useAuth();
+  const { theme, toggle } = useTheme();
   const [resetting, setResetting] = useState(false);
 
   // Menu Approval hanya untuk yang benar-benar bisa menyetujui:
@@ -82,27 +84,38 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* User + Reset */}
-          {user && (
-            <div className="flex items-center gap-2.5 shrink-0 pl-2 sm:pl-3 border-l border-white/20">
-              <div className="text-right leading-tight hidden md:block max-w-[10rem]">
-                <div className="text-sm font-semibold text-white truncate">{user.name}</div>
-                <div className="text-[11px] text-white/70 truncate">
-                  {ROLE_LABELS[user.role] || user.role}
-                  {user.department ? ` · ${user.department}` : ''}
+          {/* Kanan: toggle tema (selalu tampil) + user/reset */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={(e) => toggle(e)}
+              aria-label={theme === 'dark' ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'}
+              title={theme === 'dark' ? 'Mode terang' : 'Mode gelap'}
+              className="grid place-items-center w-9 h-9 rounded-full border border-white/30 text-white/90 hover:bg-white/15 hover:text-white transition"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
+            {user && (
+              <div className="flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-white/20">
+                <div className="text-right leading-tight hidden md:block max-w-[10rem]">
+                  <div className="text-sm font-semibold text-white truncate">{user.name}</div>
+                  <div className="text-[11px] text-white/70 truncate">
+                    {ROLE_LABELS[user.role] || user.role}
+                    {user.department ? ` · ${user.department}` : ''}
+                  </div>
                 </div>
+                <Avatar src={user.avatar} name={user.name} size={34} className="ring-2 ring-white/30" />
+                <button
+                  onClick={resetSession}
+                  disabled={resetting}
+                  title="Reset Session — ambil ulang data terbaru dari Lark"
+                  className="grid place-items-center w-9 h-9 rounded-full border border-white/30 text-white/90 hover:bg-white/15 hover:text-white transition disabled:opacity-60 shrink-0"
+                >
+                  <RotateCcw size={16} className={resetting ? 'animate-spin' : ''} />
+                </button>
               </div>
-              <Avatar src={user.avatar} name={user.name} size={34} className="ring-2 ring-white/30" />
-              <button
-                onClick={resetSession}
-                disabled={resetting}
-                title="Reset Session — ambil ulang data terbaru dari Lark"
-                className="grid place-items-center w-9 h-9 rounded-full border border-white/30 text-white/90 hover:bg-white/15 hover:text-white transition disabled:opacity-60 shrink-0"
-              >
-                <RotateCcw size={16} className={resetting ? 'animate-spin' : ''} />
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </nav>
     </header>

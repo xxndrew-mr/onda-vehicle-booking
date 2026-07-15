@@ -4,18 +4,40 @@
 :root {
   --paper: #FFFFFF; --mist: #F4F6FC;
   --ink: #0B1020; --ink-2: #5A6178; --muted: #9A9FB0;
-  --line: #E6E9F3;
+  --line: #E6E9F3; --line-2: #F0F2F8;
   --blue: #1B3BF5; --blue-ink: #0E2296; --blue-wash: #EEF1FE;
   --brand: #005DA6; --brand-deep: #004A85; /* biru brand — navbar & footer (rata) */
   --danger: #C0392B; --danger-wash: #FBEDEC; --danger-line: #F0CFCB;
   --ok: #0E7A3B; --ok-wash: #EAF7EF; --ok-line: #CDE9D8;
   --radius: 12px;
+  color-scheme: light;
 
   /* Font families di-set via next/font (variabel di _app.js). */
   --font-display: var(--font-bricolage), "Bricolage Grotesque", system-ui, sans-serif;
   --font-data: var(--font-space-mono), "Space Mono", ui-monospace, monospace;
   --font-body: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
 }
+
+/* ============================ Dark theme ============================ */
+/* Diaktifkan lewat data-theme="dark" di <html> (di-set skrip anti-flash di
+   _document.js + toggle di Navbar). Hanya override token warna — seluruh UI
+   memakai var(), jadi otomatis ikut gelap. Brand navbar/footer sengaja TIDAK
+   diubah (identitas merek; teks putih tetap kontras di dark). */
+:root[data-theme="dark"] {
+  --paper: #0B0F1A; --mist: #161C2B;
+  --ink: #EEF1F8; --ink-2: #AAB2C6; --muted: #7E8698;
+  --line: #242C3E; --line-2: #171E2C;
+  --blue: #6E8BFF; --blue-ink: #90A6FF; --blue-wash: rgba(110, 139, 255, 0.16);
+  --danger: #F5766B; --danger-wash: rgba(245, 118, 107, 0.15); --danger-line: rgba(245, 118, 107, 0.34);
+  --ok: #56D08A; --ok-wash: rgba(86, 208, 138, 0.15); --ok-line: rgba(86, 208, 138, 0.34);
+  color-scheme: dark;
+}
+
+/* Di dark, aksen biru/merah dibuat CERAH (agar terbaca sebagai teks di atas
+   latar gelap). Konsekuensinya tombol PADAT (bg aksen) butuh teks GELAP supaya
+   kontras — bukan putih. Teks = warna latar gelap (var(--paper)). */
+:root[data-theme="dark"] .pill--primary,
+:root[data-theme="dark"] .pill--danger { color: var(--paper); }
 
 /* ============================ Base ============================ */
 html { scrollbar-gutter: stable; }
@@ -146,9 +168,31 @@ select:focus-visible, textarea:focus-visible {
 }
 [data-reveal][data-revealed="true"] { opacity: 1; transform: none; }
 
+/* ============================ Ganti tema (dark mode) ============================ */
+/* Fallback tanpa View Transitions API: crossfade seluruh warna SEBENTAR saja
+   (kelas ditempel di <html> saat toggle, dilepas ~0.5s kemudian) — supaya tidak
+   ada biaya transisi permanen yang mengganggu hover. */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color .5s ease, background-image .5s ease, color .5s ease,
+    border-color .5s ease, fill .5s ease, stroke .5s ease, box-shadow .5s ease !important;
+  transition-delay: 0s !important;
+}
+
+/* View Transitions API: efek "lingkaran menyebar" dari tombol toggle. Snapshot
+   lama & baru saling menimpa; lapisan BARU di-clip jadi lingkaran (di JS). */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-new(root) { z-index: 2147483646; }
+::view-transition-old(root) { z-index: 1; }
+
 /* ============================ Reduced motion ============================ */
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] { opacity: 1 !important; transform: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
   * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
+  html.theme-transition, html.theme-transition * { transition: none !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }

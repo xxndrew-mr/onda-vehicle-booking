@@ -30,7 +30,7 @@ const clampMin = (m) => Math.max(0, Math.min(DAY_MIN, m));
 const GRID_BG = {
   backgroundImage:
     `repeating-linear-gradient(to right, var(--line) 0, var(--line) 1px, transparent 1px, transparent ${HOUR_W}px),` +
-    `repeating-linear-gradient(to right, transparent 0, transparent ${HOUR_W / 2}px, #F0F2F8 ${HOUR_W / 2}px, #F0F2F8 ${HOUR_W / 2 + 1}px, transparent ${HOUR_W / 2 + 1}px, transparent ${HOUR_W}px)`,
+    `repeating-linear-gradient(to right, transparent 0, transparent ${HOUR_W / 2}px, var(--line-2) ${HOUR_W / 2}px, var(--line-2) ${HOUR_W / 2 + 1}px, transparent ${HOUR_W / 2 + 1}px, transparent ${HOUR_W}px)`,
 };
 
 export default function VehicleTimeline({ vehicles, events, date, eventColor, onSelectRange, onEventClick }) {
