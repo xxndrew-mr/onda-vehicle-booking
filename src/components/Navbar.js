@@ -47,12 +47,11 @@ export default function Navbar() {
     } catch {
       // abaikan — reload tetap dilakukan agar UI kembali sinkron
     }
-    window.location.reload(); // muat ulang dengan session terbaru
+    window.location.reload();
   };
 
   return (
     <>
-    {/* Floating: menempel di atas (sticky), pill biru melayang dengan teks putih. */}
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
       <nav className="max-w-6xl mx-auto nav-surface backdrop-blur-md ring-1 ring-white/10 rounded-[var(--radius)] shadow-[0_18px_44px_-24px_rgba(14,34,150,0.65)]">
         <div className="px-3 sm:px-4 h-16 flex items-center justify-between gap-2">

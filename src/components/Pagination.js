@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 /**
- * Pagination client-side. Kembalikan potongan halaman + kontrol.
  * clampedPage menjaga halaman tetap valid saat jumlah item menyusut.
  */
 export function usePagination(items, pageSize = 10) {

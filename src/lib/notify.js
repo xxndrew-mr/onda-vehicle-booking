@@ -59,7 +59,6 @@ const bookingLines = (b) =>
   `Waktu: ${fmtRange(b.start_time, b.end_time)}\n` +
   `Keperluan: ${b.purpose || '-'}`;
 
-/** Notifikasi saat booking baru dibuat. */
 export async function notifyBookingCreated(b) {
   if (b.status === 'Pending Supervisor' && b.supervisor_id) {
     await safeSend(
@@ -74,7 +73,6 @@ export async function notifyBookingCreated(b) {
   }
 }
 
-/** Notifikasi setelah transisi approval. */
 export async function notifyTransition(b, nextStatus) {
   const info = `Kendaraan: ${b.vehicle_name}\nWaktu: ${fmtRange(b.start_time, b.end_time)}`;
   switch (nextStatus) {

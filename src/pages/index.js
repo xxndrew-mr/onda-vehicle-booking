@@ -35,7 +35,7 @@ export default function Home() {
   const [vehicles, setVehicles] = useState([]); // SEMUA kendaraan (baris timeline; non-Ready redup)
   const [errorMsg, setErrorMsg] = useState('');
   const [toast, setToast] = useState({ message: '', type: 'success' });
-  const [date, setDate] = useState(() => startOfDay(new Date())); // hari yang ditampilkan
+  const [date, setDate] = useState(() => startOfDay(new Date()));
 
   // Modal booking: kendaraan terpilih dari baris yang di-drag; jam bisa disesuaikan.
   const [draft, setDraft] = useState(null); // { start: Date, end: Date }
@@ -178,7 +178,6 @@ export default function Home() {
       )}
 
       <Reveal className="panel">
-        {/* Navigasi tanggal */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 border-b border-[var(--line)]">
           <Button variant="ghost" size="sm" onClick={() => setDate(startOfDay(new Date()))}>
             Hari Ini

@@ -45,7 +45,6 @@ function SearchBox({ value, onChange, placeholder }) {
   );
 }
 
-// Cari lintas field teks (kendaraan, plat, pemohon, divisi, keperluan, status).
 function matchesQuery(b, q) {
   const s = q.trim().toLowerCase();
   if (!s) return true;

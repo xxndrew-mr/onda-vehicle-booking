@@ -1,6 +1,5 @@
 import { requireAuth } from '../../../lib/auth';
 
-/** Identitas user dari session (untuk ditampilkan di UI). */
 async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET']);

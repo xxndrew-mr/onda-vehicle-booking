@@ -25,7 +25,6 @@ function RequesterLine({ item }) {
   );
 }
 
-// Kartu tahap supervisor (Approve/Reject sederhana).
 function SupervisorCard({ item, onAction, stageInfo }) {
   return (
     <div className="panel p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

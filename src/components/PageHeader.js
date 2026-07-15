@@ -1,10 +1,6 @@
 import Reveal from './Reveal';
 import { Eyebrow } from './Eyebrow';
 
-/**
- * Header halaman editorial: eyebrow mono + judul display besar + subjudul,
- * dengan slot kanan (mis. tombol aksi). Reveal saat masuk viewport.
- */
 export default function PageHeader({ eyebrow, title, subtitle, right }) {
   return (
     <Reveal className="flex flex-wrap items-end justify-between gap-6 mb-10 sm:mb-12">

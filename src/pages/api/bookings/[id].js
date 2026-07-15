@@ -28,7 +28,7 @@ async function handler(req, res) {
     return res.status(405).json({ message: `Method ${req.method} tidak diizinkan.` });
   }
 
-  const { action, new_vehicle_id, reason } = req.body || {}; // APPROVE | REJECT | CANCEL
+  const { action, new_vehicle_id, reason } = req.body || {};
   if (!['APPROVE', 'REJECT', 'CANCEL'].includes(action)) {
     return res.status(400).json({ message: 'Action tidak valid (APPROVE/REJECT/CANCEL).' });
   }

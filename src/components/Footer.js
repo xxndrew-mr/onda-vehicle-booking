@@ -20,12 +20,10 @@ export default function Footer() {
   return (
     <footer className="footer-surface mt-16 group cursor-default">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-center gap-0 transition-all duration-300 group-hover:gap-3">
-        {/* Copyright permanen */}
         <span className="mono text-[11px] uppercase tracking-[0.14em] text-white/85">
           © 2025 — PT Onda Mega Integra
         </span>
 
-        {/* Bagian yang melebar saat hover / fokus keyboard */}
         <div className="max-w-0 opacity-0 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out group-hover:max-w-[340px] group-hover:opacity-100 group-focus-within:max-w-[340px] group-focus-within:opacity-100">
           <a
             href="https://www.linkedin.com/in/andre-marshandito/"
