@@ -124,62 +124,93 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Hamburger — mobile saja */}
+            {/* Hamburger — mobile saja (ikon Menu↔X animasi putar+fade) */}
             <button
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="Menu"
               aria-expanded={menuOpen}
               className="md:hidden grid place-items-center w-9 h-9 rounded-full border border-white/30 text-white/90 hover:bg-white/15 hover:text-white transition"
             >
-              {menuOpen ? <X size={18} /> : <Menu size={18} />}
+              <span className="relative block w-[18px] h-[18px]">
+                <Menu
+                  size={18}
+                  className={`absolute inset-0 transition-all duration-300 motion-reduce:transition-none ${
+                    menuOpen ? 'opacity-0 rotate-90 scale-75' : 'opacity-100 rotate-0'
+                  }`}
+                />
+                <X
+                  size={18}
+                  className={`absolute inset-0 transition-all duration-300 motion-reduce:transition-none ${
+                    menuOpen ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90 scale-75'
+                  }`}
+                />
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Drawer mobile */}
-        {menuOpen && (
-          <div className="md:hidden border-t border-white/15 px-2 py-2">
-            {user && (
-              <div className="flex items-center gap-3 px-2 py-2.5">
-                <Avatar src={user.avatar} name={user.name} size={38} className="ring-2 ring-white/30" />
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-white truncate">{user.name}</div>
-                  <div className="text-[11px] text-white/70 truncate">
-                    {ROLE_LABELS[user.role] || user.role}
-                    {user.department ? ` · ${user.department}` : ''}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-1 space-y-0.5">
-              {links.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors ${
-                    pathname === href
-                      ? 'bg-white text-[var(--brand-deep)]'
-                      : 'text-white/90 hover:bg-white/15'
+        {/* Drawer mobile — selalu ter-mount, animasi buka/tutup via grid-rows
+            (0fr→1fr, tinggi otomatis mulus). Item muncul bertahap (stagger).
+            inert saat tertutup: tidak bisa di-tab/di-klik. */}
+        <div
+          inert={!menuOpen || undefined}
+          className={`md:hidden grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(.16,1,.3,1)] motion-reduce:transition-none ${
+            menuOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+          }`}
+        >
+          <div className="overflow-hidden min-h-0">
+            <div className="border-t border-white/15 px-2 py-2">
+              {user && (
+                <div
+                  style={{ transitionDelay: menuOpen ? '60ms' : '0ms' }}
+                  className={`flex items-center gap-3 px-2 py-2.5 transition-all duration-300 motion-reduce:transition-none ${
+                    menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
                   }`}
                 >
-                  <Icon size={18} /> {label}
-                </Link>
-              ))}
-            </div>
+                  <Avatar src={user.avatar} name={user.name} size={38} className="ring-2 ring-white/30" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-white truncate">{user.name}</div>
+                    <div className="text-[11px] text-white/70 truncate">
+                      {ROLE_LABELS[user.role] || user.role}
+                      {user.department ? ` · ${user.department}` : ''}
+                    </div>
+                  </div>
+                </div>
+              )}
 
-            {user && (
-              <button
-                onClick={resetSession}
-                disabled={resetting}
-                className="mt-1 w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium text-white/90 hover:bg-white/15 transition disabled:opacity-60"
-              >
-                <RotateCcw size={18} className={resetting ? 'animate-spin' : ''} /> Reset Session
-              </button>
-            )}
+              <div className="mt-1 space-y-0.5">
+                {links.map(({ href, label, icon: Icon }, i) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMenuOpen(false)}
+                    style={{ transitionDelay: menuOpen ? `${90 + i * 45}ms` : '0ms' }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-300 motion-reduce:transition-none ${
+                      menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
+                    } ${
+                      pathname === href ? 'bg-white text-[var(--brand-deep)]' : 'text-white/90 hover:bg-white/15'
+                    }`}
+                  >
+                    <Icon size={18} /> {label}
+                  </Link>
+                ))}
+              </div>
+
+              {user && (
+                <button
+                  onClick={resetSession}
+                  disabled={resetting}
+                  style={{ transitionDelay: menuOpen ? `${90 + links.length * 45}ms` : '0ms' }}
+                  className={`mt-1 w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium text-white/90 hover:bg-white/15 transition-all duration-300 motion-reduce:transition-none disabled:opacity-60 ${
+                    menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
+                  }`}
+                >
+                  <RotateCcw size={18} className={resetting ? 'animate-spin' : ''} /> Reset Session
+                </button>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </nav>
     </header>
 
