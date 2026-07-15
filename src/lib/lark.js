@@ -167,6 +167,41 @@ function departmentDisplayName(dept) {
   return dept.i18n_name?.en_us || dept.name || '';
 }
 
+// Leader (open_id) sebuah departemen: utamakan leader_user_id, lalu leader
+// primary (leaderType 1), lalu leader pertama. '' bila tidak ada.
+function deptLeaderId(dept) {
+  const primary = (dept.leaders || []).find((l) => l.leaderType === 1) || (dept.leaders || [])[0];
+  return dept.leader_user_id || primary?.leaderID || '';
+}
+
+/**
+ * Cari supervisor dengan menelusuri hierarki departemen KE ATAS.
+ * Mulai dari departemen (daun) user: bila leader-nya kosong ATAU = user itu
+ * sendiri, naik ke induk (`parent_department_id`) sampai ketemu leader valid
+ * (≠ user) atau mencapai puncak organisasi. Mengembalikan open_id leader / ''.
+ * Contoh: user sendirian di sub-divisi "ERP & Business Systems" → naik ke
+ * departemen induk "IT" dan pakai kepala IT sebagai supervisor.
+ */
+async function findSupervisorUpChain(startDept, openId, tenantToken) {
+  let dept = startDept;
+  const seen = new Set();
+  // Batas kedalaman sebagai pengaman (hindari loop bila data hierarki aneh).
+  for (let i = 0; i < 10 && dept; i++) {
+    const leader = deptLeaderId(dept);
+    if (leader && leader !== openId) return leader;
+    const parentId = dept.parent_department_id || '';
+    // Puncak Lark: parent kosong atau '0' (root). Berhenti bila sudah dikunjungi.
+    if (!parentId || parentId === '0' || seen.has(parentId)) return '';
+    seen.add(parentId);
+    try {
+      dept = await getDepartment(parentId, tenantToken);
+    } catch {
+      return '';
+    }
+  }
+  return '';
+}
+
 /**
  * Bangun profil ternormalisasi dari open_id memakai Contact API (tenant token):
  * departemen, supervisor, job title, role. `info` (opsional) = data user_info saat
@@ -198,14 +233,16 @@ async function buildProfileFromOpenId(openId, tenantToken, info = null) {
       (d.leaders || []).some((l) => l.leaderID === openId)
   );
 
-  // Supervisor: atasan langsung (leader_user_id); bila kosong, jatuh ke leader departemen.
+  // Supervisor: atasan langsung (leader_user_id) DULU; bila kosong, jatuh ke
+  // leader departemen — DENGAN menelusuri hierarki ke atas. Jadi user yang
+  // sendirian di sub-divisi (tanpa leader di situ) tetap naik ke leader
+  // departemen induk (mis. sub-divisi "ERP & Business Systems" → kepala "IT").
   let supervisorId = contact.leader_user_id || '';
   if (!supervisorId) {
     for (const d of departments) {
-      const primary = (d.leaders || []).find((l) => l.leaderType === 1) || (d.leaders || [])[0];
-      const deptLeader = d.leader_user_id || primary?.leaderID || '';
-      if (deptLeader && deptLeader !== openId) {
-        supervisorId = deptLeader;
+      const found = await findSupervisorUpChain(d, openId, tenantToken);
+      if (found) {
+        supervisorId = found;
         break;
       }
     }
