@@ -8,12 +8,25 @@ function appUrl(path = '') {
   return base ? `${base}${path}` : '';
 }
 
+// Notifikasi dikirim dari SERVER (Vercel = UTC). Timestamp BigQuery tersimpan UTC,
+// jadi WAJIB format eksplisit ke zona WIB — tanpa ini jam tampil geser -7 jam
+// (mis. booking 12:00 WIB tercetak 05:00). WIB = Asia/Jakarta.
+const TZ = 'Asia/Jakarta';
+
 // Terima string ISO ataupun objek BigQuery { value }.
 function fmtTime(x) {
   const v = typeof x === 'string' ? x : x?.value;
-  return v ? new Date(v).toLocaleString('id-ID') : '-';
+  if (!v) return '-';
+  return new Date(v).toLocaleString('id-ID', {
+    timeZone: TZ,
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
-const fmtRange = (s, e) => `${fmtTime(s)} s/d ${fmtTime(e)}`;
+const fmtRange = (s, e) => `${fmtTime(s)} s/d ${fmtTime(e)} WIB`;
 
 // Kirim ke banyak open_id; kegagalan notifikasi TIDAK boleh mengganggu alur utama.
 async function safeSend(openIds, text) {
