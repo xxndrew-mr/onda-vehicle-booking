@@ -138,34 +138,6 @@ select:focus-visible, textarea:focus-visible {
 .data-table tbody tr { transition: background-color .12s ease; }
 .data-table tbody tr:hover { background: var(--mist); }
 
-/* ============================ FullCalendar (editorial) ============================ */
-.fc {
-  --fc-border-color: var(--line);
-  --fc-today-bg-color: var(--blue-wash);
-  --fc-page-bg-color: var(--paper);
-  font-family: var(--font-body);
-}
-.fc .fc-toolbar-title { font-family: var(--font-display); letter-spacing: -.02em; font-size: 1.15rem; color: var(--ink); }
-.fc .fc-button {
-  background: var(--paper); border: 1px solid var(--line); color: var(--ink-2);
-  font-family: var(--font-data); font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .1em; border-radius: 999px; box-shadow: none !important; text-shadow: none;
-  padding: .4rem .7rem;
-}
-.fc .fc-button:hover { background: var(--mist); border-color: var(--ink); color: var(--ink); }
-.fc .fc-button-primary:not(:disabled).fc-button-active,
-.fc .fc-button-primary:not(:disabled):active { background: var(--blue); border-color: var(--blue); color: #fff; }
-.fc .fc-button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--blue-wash) !important; }
-.fc .fc-col-header-cell-cushion,
-.fc .fc-timegrid-axis-cushion,
-.fc .fc-timegrid-slot-label-cushion,
-.fc .fc-list-day-cushion {
-  font-family: var(--font-data); text-transform: uppercase; letter-spacing: .06em;
-  font-size: 10px; color: var(--muted);
-}
-.fc .fc-daygrid-day-number { font-family: var(--font-data); font-size: 12px; color: var(--ink-2); }
-.fc .fc-event { border: none; border-radius: 6px; font-size: 11px; padding: 1px 4px; }
-
 /* ============================ Reveal on scroll ============================ */
 [data-reveal] {
   opacity: 0; transform: translateY(26px);
