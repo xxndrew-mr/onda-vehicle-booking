@@ -81,5 +81,6 @@ Cek bentrok mengabaikan status `Rejected*` DAN `Cancelled*`. Otorisasi tahap sup
 - Teks UI & pesan API bahasa Indonesia.
 - API route: `requireAuth(handler)` + method check + try/catch → `res.status(...).json({ message })`. Balas pesan generik untuk 500 (detail ke `console.error` saja). Frontend pakai `getJson()`/`sendJson()` dari `src/lib/api.js`.
 - Ikon lucide-react: pastikan tiap ikon ada di daftar import.
+- Tailwind v4: class custom di globals.css yang akan DIKOMBINASIKAN dengan utility (mis. `.field` + `pl-10`/`py-2`) WAJIB dideklarasikan dalam `@layer components` — rule tanpa layer selalu mengalahkan utility (yang berada di `@layer utilities`), berapapun spesifisitasnya.
 - Pagination client-side via `src/components/Pagination.js` (`usePagination(items, 10)` + `<Pagination>`) — dipakai di riwayat (2 tab), approval (2 antrian), armada. Hook dipanggil di top-level (sebelum early return); `clampedPage` aman saat item menyusut.
 - Rahasia (App Secret, private key, token) tidak boleh menyentuh kode frontend.

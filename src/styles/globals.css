@@ -120,8 +120,13 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   color: var(--ink);
   transition: border-color .15s ease, box-shadow .15s ease;
 }
-.field { min-height: 44px; padding: 0 .8rem; width: 100%; }
-textarea.field { padding: .6rem .8rem; min-height: auto; }
+/* .field WAJIB di @layer components: rule tanpa layer mengalahkan utility Tailwind
+   (yang ada di @layer utilities), jadi pl-10/py-2 dkk tidak akan berefek — ikon
+   search pernah menimpa teks input karena ini. */
+@layer components {
+  .field { min-height: 44px; padding: 0 .8rem; width: 100%; }
+  textarea.field { padding: .6rem .8rem; min-height: auto; }
+}
 input:not([type="checkbox"]):not([type="radio"]):focus-visible,
 select:focus-visible, textarea:focus-visible {
   outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-wash);

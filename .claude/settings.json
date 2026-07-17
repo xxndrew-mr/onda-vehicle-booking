@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -C \"d:/Documents/Andre/Work Project/car-booking-system\" diff -- src/components/Navbar.js)"
+      "Bash(git -C \"d:/Documents/Andre/Work Project/car-booking-system\" diff -- src/components/Navbar.js)",
+      "Bash(npx eslint *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(git -C \"d:/Documents/Andre/Work Project/car-booking-system\" log --oneline -3 -- src/components/Navbar.js)",
+      "Bash(git -C \"d:/Documents/Andre/Work Project/car-booking-system\" show HEAD~2:src/components/Navbar.js)"
     ]
   }
 }
