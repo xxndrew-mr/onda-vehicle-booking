@@ -20,6 +20,22 @@ function accountsBase() {
   return openBase().replace('//open.', '//accounts.');
 }
 
+function applinkBase() {
+  // open.larksuite.com -> applink.larksuite.com | open.feishu.cn -> applink.feishu.cn
+  return openBase().replace('//open.', '//applink.');
+}
+
+/**
+ * Bungkus URL aplikasi jadi Lark applink agar dibuka DI DALAM klien Lark (webview),
+ * bukan browser eksternal. Penting untuk link di notifikasi bot: di dalam klien,
+ * sesi Lark tersedia sehingga SSO berjalan otomatis tanpa halaman login. Di browser
+ * luar (tanpa sesi Lark) user akan dihadapkan halaman login Lark dulu.
+ */
+export function larkAppLink(url) {
+  if (!url) return '';
+  return `${applinkBase()}/client/web_url/open?url=${encodeURIComponent(url)}`;
+}
+
 function getAppCredentials() {
   const { LARK_APP_ID, LARK_APP_SECRET } = process.env;
   if (!LARK_APP_ID || !LARK_APP_SECRET) {

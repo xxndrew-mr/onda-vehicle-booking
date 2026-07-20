@@ -1,11 +1,13 @@
-import { sendLarkMessage } from './lark';
+import { sendLarkMessage, larkAppLink } from './lark';
 import getBigQuery from './bigquery';
 
 const DATASET = 'onda_booking_db';
 
+// Link di pesan bot dibungkus applink → dibuka di dalam klien Lark, sehingga
+// sesi Lark tersedia dan SSO otomatis (tanpa halaman login seperti di browser luar).
 function appUrl(path = '') {
   const base = (process.env.APP_BASE_URL || '').replace(/\/$/, '');
-  return base ? `${base}${path}` : '';
+  return base ? larkAppLink(`${base}${path}`) : '';
 }
 
 // Notifikasi dikirim dari SERVER (Vercel = UTC). Timestamp BigQuery tersimpan UTC,
