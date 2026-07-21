@@ -1,4 +1,4 @@
-import { sendLarkMessage, larkAppLink } from './lark';
+import { sendLarkCard, larkAppLink } from './lark';
 import getBigQuery from './bigquery';
 
 const DATASET = 'onda_booking_db';
@@ -30,12 +30,35 @@ function fmtTime(x) {
 }
 const fmtRange = (s, e) => `${fmtTime(s)} s/d ${fmtTime(e)} WIB`;
 
-// Kirim ke banyak open_id; kegagalan notifikasi TIDAK boleh mengganggu alur utama.
-async function safeSend(openIds, text) {
+// Kartu interaktif Lark: judul berwarna + detail (lark_md) + tombol link.
+// Link jadi TOMBOL (bukan URL panjang di teks).
+function buildCard({ title, template, lines, button }) {
+  return {
+    config: { wide_screen_mode: true },
+    header: { title: { tag: 'plain_text', content: title }, template },
+    elements: [
+      { tag: 'div', text: { tag: 'lark_md', content: lines } },
+      ...(button
+        ? [{
+            tag: 'action',
+            actions: [{
+              tag: 'button',
+              text: { tag: 'plain_text', content: button.label },
+              type: 'primary',
+              url: button.url,
+            }],
+          }]
+        : []),
+    ],
+  };
+}
+
+// Kirim kartu ke banyak open_id; kegagalan notifikasi TIDAK boleh mengganggu alur utama.
+async function safeSend(openIds, card) {
   const targets = [...new Set((openIds || []).filter(Boolean))];
   await Promise.all(
     targets.map((id) =>
-      sendLarkMessage(id, text).catch((e) => console.error('[notify] gagal ke', id, e.message))
+      sendLarkCard(id, card).catch((e) => console.error('[notify] gagal ke', id, e.message))
     )
   );
 }
@@ -56,42 +79,66 @@ async function gaApproverOpenIds() {
 }
 
 const bookingLines = (b) =>
-  `Pemohon: ${b.user_name}${b.requester_department ? ` (${b.requester_department})` : ''}\n` +
-  `Kendaraan: ${b.vehicle_name}\n` +
-  `Waktu: ${fmtRange(b.start_time, b.end_time)}\n` +
-  `Keperluan: ${b.purpose || '-'}`;
+  `**Pemohon:** ${b.user_name}${b.requester_department ? ` (${b.requester_department})` : ''}\n` +
+  `**Kendaraan:** ${b.vehicle_name}\n` +
+  `**Waktu:** ${fmtRange(b.start_time, b.end_time)}\n` +
+  `**Keperluan:** ${b.purpose || '-'}`;
+
+const approvalButton = () => ({ label: 'Buka Halaman Approval', url: appUrl('/approval') });
+const riwayatButton = () => ({ label: 'Lihat Riwayat Saya', url: appUrl('/riwayat') });
 
 export async function notifyBookingCreated(b) {
   if (b.status === 'Pending Supervisor' && b.supervisor_id) {
-    await safeSend(
-      [b.supervisor_id],
-      `🚗 Booking baru menunggu persetujuan Anda (Supervisor)\n\n${bookingLines(b)}\n\nBuka: ${appUrl('/approval')}`
-    );
+    await safeSend([b.supervisor_id], buildCard({
+      title: '🚗 Booking baru menunggu persetujuan Anda (Supervisor)',
+      template: 'blue',
+      lines: bookingLines(b),
+      button: approvalButton(),
+    }));
   } else if (b.status === 'Pending GA') {
-    await safeSend(
-      await gaApproverOpenIds(),
-      `🚗 Booking menunggu persetujuan GA\n\n${bookingLines(b)}\n\nBuka: ${appUrl('/approval')}`
-    );
+    await safeSend(await gaApproverOpenIds(), buildCard({
+      title: '🚗 Booking menunggu persetujuan GA',
+      template: 'blue',
+      lines: bookingLines(b),
+      button: approvalButton(),
+    }));
   }
 }
 
 export async function notifyTransition(b, nextStatus) {
-  const info = `Kendaraan: ${b.vehicle_name}\nWaktu: ${fmtRange(b.start_time, b.end_time)}`;
+  const info = `**Kendaraan:** ${b.vehicle_name}\n**Waktu:** ${fmtRange(b.start_time, b.end_time)}`;
   switch (nextStatus) {
     case 'Pending GA':
-      await safeSend(
-        await gaApproverOpenIds(),
-        `🚗 Booking menunggu persetujuan GA (sudah disetujui supervisor)\n\n${bookingLines(b)}\n\nBuka: ${appUrl('/approval')}`
-      );
+      await safeSend(await gaApproverOpenIds(), buildCard({
+        title: '🚗 Booking menunggu persetujuan GA',
+        template: 'blue',
+        lines: `${bookingLines(b)}\n\n_Sudah disetujui supervisor._`,
+        button: approvalButton(),
+      }));
       break;
     case 'Approved':
-      await safeSend([b.requester_id], `✅ Booking Anda DISETUJUI\n\n${info}`);
+      await safeSend([b.requester_id], buildCard({
+        title: '✅ Booking Anda DISETUJUI',
+        template: 'green',
+        lines: info,
+        button: riwayatButton(),
+      }));
       break;
     case 'Rejected By Supervisor':
-      await safeSend([b.requester_id], `❌ Booking Anda ditolak Supervisor\n\n${info}`);
+      await safeSend([b.requester_id], buildCard({
+        title: '❌ Booking Anda ditolak Supervisor',
+        template: 'red',
+        lines: info,
+        button: riwayatButton(),
+      }));
       break;
     case 'Rejected By GA':
-      await safeSend([b.requester_id], `❌ Booking Anda ditolak GA\n\n${info}`);
+      await safeSend([b.requester_id], buildCard({
+        title: '❌ Booking Anda ditolak GA',
+        template: 'red',
+        lines: info,
+        button: riwayatButton(),
+      }));
       break;
     default:
       break;

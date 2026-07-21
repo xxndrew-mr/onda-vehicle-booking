@@ -114,7 +114,19 @@ export async function getTenantAccessToken() {
  * scope `im:message:send_as_bot`, dan visible range app mencakup penerima.
  */
 export async function sendLarkMessage(openId, text) {
-  if (!openId || !text) return null;
+  return sendLarkIm(openId, 'text', { text });
+}
+
+/**
+ * Kirim KARTU interaktif (msg_type "interactive") — dipakai notifikasi supaya
+ * link tampil sebagai TOMBOL, bukan URL panjang. Prasyarat sama dengan pesan teks.
+ */
+export async function sendLarkCard(openId, card) {
+  return sendLarkIm(openId, 'interactive', card);
+}
+
+async function sendLarkIm(openId, msgType, contentObj) {
+  if (!openId || !contentObj) return null;
   const tenantToken = await getTenantAccessToken();
   const res = await fetch(`${openBase()}/open-apis/im/v1/messages?receive_id_type=open_id`, {
     method: 'POST',
@@ -124,8 +136,8 @@ export async function sendLarkMessage(openId, text) {
     },
     body: JSON.stringify({
       receive_id: openId,
-      msg_type: 'text',
-      content: JSON.stringify({ text }), // content WAJIB string JSON ter-escape
+      msg_type: msgType,
+      content: JSON.stringify(contentObj), // content WAJIB string JSON ter-escape
     }),
   });
   const body = await res.json().catch(() => null);
