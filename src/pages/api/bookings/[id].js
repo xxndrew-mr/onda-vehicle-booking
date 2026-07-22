@@ -42,6 +42,7 @@ async function handler(req, res) {
       bigquery.query({
         query: `SELECT b.status, b.supervisor_id, b.requester_id, b.vehicle_id,
                        b.start_time, b.end_time, b.user_name, b.requester_department,
+                       b.purpose,
                        COALESCE(v.name, 'Kendaraan') AS vehicle_name
                 FROM \`${DATASET}.bookings\` b
                 LEFT JOIN \`${DATASET}.vehicles\` v ON b.vehicle_id = v.id
