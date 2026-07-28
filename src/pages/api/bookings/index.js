@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import getBigQuery, { runDml } from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
 import { getUserByLarkId } from '../../../lib/users';
+import { skipsSupervisorStage } from '../../../lib/roles';
 import { isVehicleAvailable } from '../../../lib/vehicleStatus';
 import { notifyBookingCreated } from '../../../lib/notify';
 
@@ -74,7 +75,14 @@ async function handler(req, res) {
         return res.status(401).json({ message: 'Profil user tidak ditemukan. Silakan login ulang.' });
       }
 
-      const hasSupervisor = !!requester.leader_user_id;
+      // PA (Personal Assistant) melewati tahap supervisor → langsung Pending GA.
+      const paSkip = skipsSupervisorStage({
+        larkUserId: requester.lark_user_id,
+        jobTitle: requester.job_title,
+        // department_names tersimpan sebagai string gabungan koma di tabel users.
+        departmentNames: String(requester.department_names || '').split(','),
+      });
+      const hasSupervisor = !paSkip && !!requester.leader_user_id;
       const initialStatus = hasSupervisor ? 'Pending Supervisor' : 'Pending GA';
 
       // Cek bentrok dalam satu statement INSERT ... WHERE NOT EXISTS (strict overlap;
@@ -110,8 +118,8 @@ async function handler(req, res) {
         user_name: req.user.name,
         user_level: requester.role || req.user.role,
         requester_department: requester.department_names || '',
-        supervisor_id: requester.leader_user_id || '',
-        supervisor_name: requester.leader_name || '',
+        supervisor_id: hasSupervisor ? requester.leader_user_id : '',
+        supervisor_name: hasSupervisor ? requester.leader_name || '' : '',
         start_time,
         end_time,
         purpose,
@@ -126,7 +134,7 @@ async function handler(req, res) {
       try {
         await notifyBookingCreated({
           status: initialStatus,
-          supervisor_id: requester.leader_user_id || '',
+          supervisor_id: hasSupervisor ? requester.leader_user_id : '',
           requester_id: req.user.sub,
           user_name: req.user.name,
           requester_department: requester.department_names || '',

@@ -32,9 +32,20 @@ export default async function handler(req, res) {
     if (site && site !== 'same-origin' && site !== 'same-site') {
       return res.status(403).json({ message: 'Permintaan lintas-situs ditolak.' });
     }
+    // Origin dibandingkan PERSIS (scheme+host+port) — startsWith bisa dilewati
+    // host mirip (mis. "https://app.example.com.evil.test"). new URL().origin
+    // juga menormalkan trailing slash pada APP_BASE_URL.
     const origin = req.headers.origin;
-    if (origin && process.env.APP_BASE_URL && !origin.startsWith(process.env.APP_BASE_URL)) {
-      return res.status(403).json({ message: 'Origin tidak diizinkan.' });
+    if (origin && process.env.APP_BASE_URL) {
+      let allowedOrigin = null;
+      try {
+        allowedOrigin = new URL(process.env.APP_BASE_URL).origin;
+      } catch {
+        allowedOrigin = null;
+      }
+      if (!allowedOrigin || origin !== allowedOrigin) {
+        return res.status(403).json({ message: 'Origin tidak diizinkan.' });
+      }
     }
 
     try {

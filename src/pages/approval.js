@@ -59,9 +59,12 @@ function GaCard({ item, onAction, stageInfo, availableVehicles }) {
 
   const options = availableVehicles.filter((v) => v.id !== item.vehicle_id);
   const swapReady = newVehicleId && reason.trim();
+  // Efektif hanya bila kendaraan MASIH bermasalah — bila kembali Ready (mis.
+  // setelah refetch), centang basi diabaikan agar tombol tidak terkunci.
+  const wantsSwap = swap && hasIssue;
 
   const approve = () => {
-    if (swap) {
+    if (wantsSwap) {
       if (!swapReady) return;
       onAction(item.id, 'APPROVE', { new_vehicle_id: newVehicleId, reason: reason.trim() });
     } else {
@@ -90,8 +93,8 @@ function GaCard({ item, onAction, stageInfo, availableVehicles }) {
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="primary" arrow onClick={approve} disabled={swap && !swapReady}>
-            {swap ? 'Setujui + Ganti' : 'Setujui'}
+          <Button variant="primary" arrow onClick={approve} disabled={wantsSwap && !swapReady}>
+            {wantsSwap ? 'Setujui + Ganti' : 'Setujui'}
           </Button>
           <Button variant="danger" onClick={() => onAction(item.id, 'REJECT')}>Tolak</Button>
         </div>
@@ -168,12 +171,21 @@ export default function Approvals() {
   }, [fetchPending]);
 
   const handleAction = async (id, action, extra = {}) => {
-    // Optimistic: hapus kartu dari antrian seketika agar terasa instan.
-    setQueues((q) => ({
-      ...q,
-      supervisorQueue: q.supervisorQueue.filter((b) => b.id !== id),
-      gaQueue: q.gaQueue.filter((b) => b.id !== id),
-    }));
+    // Optimistic: APPROVE tahap supervisor oleh viewer GA/ADMIN → booking jadi
+    // Pending GA, jadi kartunya DIPINDAH ke antrian GA (bukan hilang — antrian
+    // GA di layar tetap sinkron dengan server). Selain itu: hapus dari antrian.
+    setQueues((q) => {
+      const fromSup = q.supervisorQueue.find((b) => b.id === id);
+      const viewerIsGa = q.role === 'GA' || q.role === 'ADMIN';
+      const moveToGa = action === 'APPROVE' && fromSup && viewerIsGa;
+      return {
+        ...q,
+        supervisorQueue: q.supervisorQueue.filter((b) => b.id !== id),
+        gaQueue: moveToGa
+          ? [...q.gaQueue.filter((b) => b.id !== id), fromSup]
+          : q.gaQueue.filter((b) => b.id !== id),
+      };
+    });
     try {
       const res = await sendJson(`/api/bookings/${id}`, 'PATCH', { action, ...extra });
       setToast({ message: res.message || 'Berhasil diproses.', type: 'success' });
@@ -287,7 +299,7 @@ export default function Approvals() {
                           <Person name={item.supervisor_name} openId={item.supervisor_id} size={18} />
                         </span>
                       ) : (
-                        'Langsung ke GA (pemohon tidak punya supervisor di Lark).'
+                        'Langsung ke GA (tanpa tahap supervisor).'
                       )
                     }
                   />

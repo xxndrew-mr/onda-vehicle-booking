@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Check, AlertCircle, X } from 'lucide-react';
 
 /**
@@ -6,11 +6,19 @@ import { Check, AlertCircle, X } from 'lucide-react';
  * Auto-hilang setelah beberapa detik. Palet: biru (sukses) · danger (error).
  */
 export default function Toast({ message, type = 'success', onClose }) {
+  // onClose disimpan di ref: pemanggil selalu meneruskan arrow function baru per
+  // render, jadi bila jadi dependency, timer ter-reset di tiap re-render induk
+  // (mis. saat mengetik di kotak cari) dan toast tidak pernah hilang.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!message) return undefined;
-    const t = setTimeout(onClose, 3500);
+    const t = setTimeout(() => onCloseRef.current(), 3500);
     return () => clearTimeout(t);
-  }, [message, onClose]);
+  }, [message]);
 
   if (!message) return null;
   const ok = type !== 'error';

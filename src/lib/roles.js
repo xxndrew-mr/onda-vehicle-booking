@@ -22,6 +22,27 @@ function csvEnv(name, fallback = '') {
     .filter(Boolean);
 }
 
+/**
+ * PA (Personal Assistant) MELEWATI tahap supervisor — booking-nya langsung
+ * `Pending GA` (atasan PA tidak perlu meng-approve). Identifikasi via:
+ *   - env PA_DEPARTMENT_NAMES : kecocokan PERSIS nama departemen Lark
+ *     (default "Personal Assistant Commissioner,Sekretaris & PA"), atau
+ *   - env PA_LARK_IDS   : daftar open_id dipisah koma, atau
+ *   - env PA_JOB_TITLES : kecocokan PERSIS job title (default "PA,Personal Assistant").
+ * Semua case-insensitive. Dievaluasi saat booking DIBUAT (profil dari tabel users).
+ */
+export function skipsSupervisorStage({ larkUserId = '', jobTitle = '', departmentNames = [] }) {
+  const paDepts = csvEnv('PA_DEPARTMENT_NAMES', 'Personal Assistant Commissioner,Sekretaris & PA');
+  if (departmentNames.some((d) => paDepts.includes(String(d).trim().toLowerCase()))) return true;
+
+  const paIds = csvEnv('PA_LARK_IDS');
+  if (larkUserId && paIds.includes(String(larkUserId).toLowerCase())) return true;
+
+  const paTitles = csvEnv('PA_JOB_TITLES', 'PA,Personal Assistant');
+  const title = String(jobTitle || '').trim().toLowerCase();
+  return !!title && paTitles.includes(title);
+}
+
 export function resolveRole({
   larkUserId = '',
   emails = [],
