@@ -2,7 +2,7 @@ import getBigQuery, { runDml } from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
 import { getUserByLarkId } from '../../../lib/users';
 import { isVehicleAvailable } from '../../../lib/vehicleStatus';
-import { notifyTransition } from '../../../lib/notify';
+import { notifyTransition, notifyVehicleChanged } from '../../../lib/notify';
 
 const DATASET = 'onda_booking_db';
 
@@ -29,8 +29,8 @@ async function handler(req, res) {
   }
 
   const { action, new_vehicle_id, reason } = req.body || {};
-  if (!['APPROVE', 'REJECT', 'CANCEL'].includes(action)) {
-    return res.status(400).json({ message: 'Action tidak valid (APPROVE/REJECT/CANCEL).' });
+  if (!['APPROVE', 'REJECT', 'CANCEL', 'SWAP'].includes(action)) {
+    return res.status(400).json({ message: 'Action tidak valid (APPROVE/REJECT/CANCEL/SWAP).' });
   }
 
   try {
@@ -83,6 +83,62 @@ async function handler(req, res) {
         return res.status(409).json({ message: 'Booking baru saja berubah. Muat ulang halaman.' });
       }
       return res.status(200).json({ message: 'Booking dibatalkan.' });
+    }
+
+    // --- GA/ADMIN ganti armada pada booking yang SUDAH Approved ---
+    // Beda dengan swap saat approve: di sini kendaraan asli TIDAK harus bermasalah
+    // (GA bebas mengganti). Tetap: alasan wajib, pengganti Ready + tidak bentrok.
+    if (action === 'SWAP') {
+      if (me.role !== 'GA' && !isAdmin) {
+        return res.status(403).json({ message: 'Hanya tim GA yang bisa mengganti armada.' });
+      }
+      if (currentStatus !== 'Approved') {
+        return res.status(409).json({ message: `Ganti armada hanya untuk booking yang sudah disetujui (status: ${currentStatus}).` });
+      }
+      if (!new_vehicle_id || new_vehicle_id === booking.vehicle_id) {
+        return res.status(400).json({ message: 'Pilih kendaraan pengganti yang berbeda.' });
+      }
+      if (!reason || !String(reason).trim()) {
+        return res.status(400).json({ message: 'Alasan pergantian kendaraan wajib diisi.' });
+      }
+
+      const [[nv], [conf]] = await Promise.all([
+        bigquery.query({
+          query: `SELECT status, name FROM \`${DATASET}.vehicles\` WHERE id = @vId`,
+          params: { vId: new_vehicle_id },
+        }),
+        bigquery.query({
+          query: `SELECT id FROM \`${DATASET}.bookings\`
+                  WHERE vehicle_id = @nv AND id != @id
+                    AND status NOT LIKE 'Rejected%' AND status NOT LIKE 'Cancelled%'
+                    AND start_time < TIMESTAMP(@end) AND end_time > TIMESTAMP(@start)`,
+          params: { nv: new_vehicle_id, id, start: booking.start_time.value, end: booking.end_time.value },
+        }),
+      ]);
+
+      if (nv.length === 0) return res.status(400).json({ message: 'Kendaraan pengganti tidak ditemukan.' });
+      if (!isVehicleAvailable(nv[0].status)) return res.status(409).json({ message: 'Kendaraan pengganti sedang tidak tersedia.' });
+      if (conf.length > 0) return res.status(409).json({ message: 'Kendaraan pengganti sudah dipesan pada jam tersebut.' });
+
+      const affected = await runDml(
+        `UPDATE \`${DATASET}.bookings\`
+         SET vehicle_id = @newV,
+             original_vehicle_id = COALESCE(original_vehicle_id, @oldV),
+             vehicle_change_reason = @reason,
+             vehicle_change_by = @actor,
+             vehicle_change_at = CURRENT_TIMESTAMP()
+         WHERE id = @id AND status = 'Approved'`,
+        { newV: new_vehicle_id, oldV: booking.vehicle_id, reason: String(reason).trim(), actor, id }
+      );
+      if (affected === 0) {
+        return res.status(409).json({ message: 'Booking baru saja berubah. Muat ulang halaman.' });
+      }
+      try {
+        await notifyVehicleChanged({ ...booking, vehicle_name: nv[0].name || booking.vehicle_name }, String(reason).trim());
+      } catch (e) {
+        console.error('[notify] swap approved:', e.message);
+      }
+      return res.status(200).json({ message: 'Kendaraan diganti.' });
     }
 
     // --- Tahap GA: APPROVE (opsional dengan pergantian armada) ---

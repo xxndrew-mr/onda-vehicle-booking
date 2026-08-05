@@ -105,6 +105,19 @@ export async function notifyBookingCreated(b) {
   }
 }
 
+// GA mengganti armada pada booking yang sudah Approved → beri tahu pemohon.
+export async function notifyVehicleChanged(b, reason) {
+  await safeSend([b.requester_id], buildCard({
+    title: '🔄 Kendaraan booking Anda diganti oleh GA',
+    template: 'blue',
+    lines:
+      `**Kendaraan (baru):** ${b.vehicle_name}\n` +
+      `**Waktu:** ${fmtRange(b.start_time, b.end_time)}\n` +
+      `**Alasan:** ${reason || '-'}`,
+    button: riwayatButton(),
+  }));
+}
+
 export async function notifyTransition(b, nextStatus) {
   const info = `**Kendaraan:** ${b.vehicle_name}\n**Waktu:** ${fmtRange(b.start_time, b.end_time)}`;
   switch (nextStatus) {

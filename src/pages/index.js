@@ -50,6 +50,21 @@ export default function Home() {
   const [detail, setDetail] = useState(null);
   const [cancelling, setCancelling] = useState(false);
 
+  // GA/ADMIN: ganti armada pada booking yang sudah Approved (dari modal detail).
+  const [swapMode, setSwapMode] = useState(false);
+  const [swapVehicleId, setSwapVehicleId] = useState('');
+  const [swapReason, setSwapReason] = useState('');
+  const [swapping, setSwapping] = useState(false);
+  const isGa = !!user && (user.role === 'GA' || user.role === 'ADMIN');
+
+  // Buka detail sambil reset state swap (hindari nilai basi antar-booking).
+  const openDetail = (b) => {
+    setSwapMode(false);
+    setSwapVehicleId('');
+    setSwapReason('');
+    setDetail(b);
+  };
+
   const fetchBookings = useCallback(() => {
     getJson('/api/bookings')
       .then((data) => {
@@ -154,8 +169,35 @@ export default function Home() {
     }
   };
 
+  const swapBooking = async (id) => {
+    if (!swapVehicleId || !swapReason.trim()) return;
+    setSwapping(true);
+    try {
+      await sendJson(`/api/bookings/${id}`, 'PATCH', {
+        action: 'SWAP',
+        new_vehicle_id: swapVehicleId,
+        reason: swapReason.trim(),
+      });
+      setDetail(null);
+      setSwapMode(false);
+      setToast({ message: 'Kendaraan diganti.', type: 'success' });
+      fetchBookings();
+    } catch (err) {
+      setToast({ message: err.message, type: 'error' });
+    } finally {
+      setSwapping(false);
+    }
+  };
+
   const canCancel =
     detail && user && detail.requester_id === user.id && ACTIVE_STATUSES.includes(detail.status);
+
+  // Kendaraan Ready yang bebas di jam booking ini (untuk GA ganti armada), tanpa kendaraan saat ini.
+  const detailSwapVehicles = useMemo(() => {
+    if (!detail || detail.status !== 'Approved' || !detail.start_time?.value) return [];
+    return vehiclesFreeForSlot(new Date(detail.start_time.value), new Date(detail.end_time.value))
+      .filter((v) => v.id !== detail.vehicle_id);
+  }, [detail, vehiclesFreeForSlot]);
 
   const selectedVehicle = slotVehicles.find((v) => v.id === modalVehicleId) || null;
   const shiftDay = (n) => setDate((d) => startOfDay(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)));
@@ -270,7 +312,7 @@ export default function Home() {
             date={date}
             eventColor={getEventColor}
             onSelectRange={handleSelectRange}
-            onEventClick={(b) => setDetail(b)}
+            onEventClick={openDetail}
           />
         </div>
       </Reveal>
@@ -400,6 +442,48 @@ export default function Home() {
                 </p>
               )}
             </div>
+
+            {/* GA/ADMIN: ganti armada pada booking yang sudah Approved */}
+            {isGa && detail.status === 'Approved' && (
+              <div className="mb-5 pt-4 hairline">
+                {!swapMode ? (
+                  <Button variant="ghost" size="sm" onClick={() => { setSwapMode(true); setSwapVehicleId(detailSwapVehicles[0]?.id || ''); setSwapReason(''); }}>
+                    Ganti Kendaraan (GA)
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="label">Ganti kendaraan</p>
+                    {detailSwapVehicles.length === 0 ? (
+                      <p className="text-xs text-[var(--muted)]">Tidak ada kendaraan Ready lain yang bebas di jam ini.</p>
+                    ) : (
+                      <select className="field text-sm" value={swapVehicleId} onChange={(e) => setSwapVehicleId(e.target.value)}>
+                        {detailSwapVehicles.map((v) => (
+                          <option key={v.id} value={v.id}>{v.name} ({v.license_plate})</option>
+                        ))}
+                      </select>
+                    )}
+                    <textarea
+                      className="field text-sm"
+                      rows={2}
+                      value={swapReason}
+                      onChange={(e) => setSwapReason(e.target.value)}
+                      placeholder="Alasan pergantian (wajib)"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="primary"
+                        arrow
+                        onClick={() => swapBooking(detail.id)}
+                        disabled={swapping || !swapVehicleId || !swapReason.trim()}
+                      >
+                        {swapping ? 'Mengganti' : 'Ganti Kendaraan'}
+                      </Button>
+                      <Button variant="ghost" onClick={() => setSwapMode(false)} disabled={swapping}>Batal</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex justify-between items-center gap-2">
               {canCancel ? (
