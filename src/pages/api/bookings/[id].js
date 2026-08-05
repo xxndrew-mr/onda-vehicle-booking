@@ -2,7 +2,7 @@ import getBigQuery, { runDml } from '../../../lib/bigquery';
 import { requireAuth } from '../../../lib/auth';
 import { getUserByLarkId } from '../../../lib/users';
 import { isVehicleAvailable } from '../../../lib/vehicleStatus';
-import { notifyTransition, notifyVehicleChanged } from '../../../lib/notify';
+import { notifyTransition, notifyVehicleChanged, notifyCancelledByGa } from '../../../lib/notify';
 
 const DATASET = 'onda_booking_db';
 
@@ -65,24 +65,34 @@ async function handler(req, res) {
     const booking = rows[0];
     const currentStatus = booking.status;
 
-    // --- Pembatalan oleh pemohon (atau ADMIN) ---
+    // --- Pembatalan: pemohon sendiri, ATAU GA/ADMIN (membatalkan booking orang) ---
     if (action === 'CANCEL') {
       const isOwner = booking.requester_id && booking.requester_id === me.lark_user_id;
-      if (!isOwner && !isAdmin) {
-        return res.status(403).json({ message: 'Hanya pemohon yang bisa membatalkan booking ini.' });
+      const canGaCancel = me.role === 'GA' || isAdmin;
+      if (!isOwner && !canGaCancel) {
+        return res.status(403).json({ message: 'Anda tidak berhak membatalkan booking ini.' });
       }
       if (!['Pending Supervisor', 'Pending GA', 'Approved'].includes(currentStatus)) {
         return res.status(409).json({ message: `Booking tidak bisa dibatalkan (status: ${currentStatus}).` });
       }
+      // Label beda agar pemohon tahu siapa yang membatalkan (dirinya vs GA).
+      const cancelStatus = isOwner ? 'Cancelled By User' : 'Cancelled By GA';
       const affected = await runDml(
-        `UPDATE \`${DATASET}.bookings\` SET status = 'Cancelled By User'
+        `UPDATE \`${DATASET}.bookings\` SET status = @cancelStatus
          WHERE id = @id AND status = @expected`,
-        { id, expected: currentStatus }
+        { id, expected: currentStatus, cancelStatus }
       );
       if (affected === 0) {
         return res.status(409).json({ message: 'Booking baru saja berubah. Muat ulang halaman.' });
       }
-      return res.status(200).json({ message: 'Booking dibatalkan.' });
+      if (!isOwner) {
+        try {
+          await notifyCancelledByGa(booking);
+        } catch (e) {
+          console.error('[notify] cancel by GA:', e.message);
+        }
+      }
+      return res.status(200).json({ message: isOwner ? 'Booking dibatalkan.' : 'Booking pemohon dibatalkan.' });
     }
 
     // --- GA/ADMIN ganti armada pada booking yang SUDAH Approved ---

@@ -11,6 +11,7 @@ export const STATUS_META = {
   'Rejected By Supervisor': { label: 'Ditolak Supervisor', cls: 'badge badge--danger' },
   'Rejected By GA': { label: 'Ditolak GA', cls: 'badge badge--danger' },
   'Cancelled By User': { label: 'Dibatalkan', cls: 'badge' },
+  'Cancelled By GA': { label: 'Dibatalkan GA', cls: 'badge' },
 };
 
 export function StatusBadge({ status }) {

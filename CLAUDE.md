@@ -52,7 +52,8 @@ String status dipakai oleh API, halaman approval, dan timeline booking. Halaman 
 - PA (Personal Assistant) SELALU melewati tahap supervisor → langsung `Pending GA` dengan `supervisor_id` kosong (`skipsSupervisorStage()` di roles.js). Deteksi utama: `PA_DEPARTMENT_NAMES` exact-match nama departemen (default "Personal Assistant Commissioner,Sekretaris & PA"); tambahan: `PA_LARK_IDS` per open_id / `PA_JOB_TITLES` exact-match job title. Dicek saat booking dibuat.
 - `Pending Supervisor`: hanya user dengan open_id == `supervisor_id` (atau ADMIN). APPROVE → `Pending GA`; REJECT → `Rejected By Supervisor`
 - `Pending GA`: hanya role GA/ADMIN. APPROVE → `Approved`; REJECT → `Rejected By GA`
-- CANCEL: pemohon (open_id == `requester_id`) atau ADMIN, dari status aktif (`Pending*`/`Approved`) → `Cancelled By User`. Slot dibebaskan.
+- CANCEL: pemohon (open_id == `requester_id`) → `Cancelled By User`; GA/ADMIN membatalkan booking orang lain → `Cancelled By GA` (notif ke pemohon). Dari status aktif (`Pending*`/`Approved`). Slot dibebaskan. Cek bentrok & timeline mengabaikan semua `Cancelled*`.
+- GA/ADMIN ganti armada pada booking `Approved` (aksi `SWAP` di `[id].js`, dari modal detail booking): kendaraan asli TIDAK harus bermasalah; pengganti Ready + tidak bentrok; alasan wajib; status tetap `Approved`; tulis `vehicle_change_*` + `original_vehicle_id` (COALESCE); notif ke pemohon.
 - Setiap transisi approval menulis audit `{supervisor|ga}_action_by/_at`
 
 Cek bentrok mengabaikan status `Rejected*` DAN `Cancelled*`. Otorisasi tahap supervisor = pencocokan `supervisor_id`, BUKAN role. Role hanya untuk gerbang GA/ADMIN dan tampilan.

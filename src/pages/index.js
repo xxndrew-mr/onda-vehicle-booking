@@ -191,6 +191,9 @@ export default function Home() {
 
   const canCancel =
     detail && user && detail.requester_id === user.id && ACTIVE_STATUSES.includes(detail.status);
+  // GA/ADMIN boleh membatalkan booking ORANG LAIN yang masih aktif.
+  const canGaCancel =
+    isGa && detail && ACTIVE_STATUSES.includes(detail.status) && !canCancel;
 
   // Kendaraan Ready yang bebas di jam booking ini (untuk GA ganti armada), tanpa kendaraan saat ini.
   const detailSwapVehicles = useMemo(() => {
@@ -486,9 +489,16 @@ export default function Home() {
             )}
 
             <div className="flex justify-between items-center gap-2">
-              {canCancel ? (
-                <Button variant="danger" onClick={() => cancelBooking(detail.id)} disabled={cancelling}>
-                  {cancelling ? 'Membatalkan' : 'Batalkan Booking'}
+              {canCancel || canGaCancel ? (
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    if (canGaCancel && !window.confirm(`Batalkan booking ${detail.user_name}?`)) return;
+                    cancelBooking(detail.id);
+                  }}
+                  disabled={cancelling}
+                >
+                  {cancelling ? 'Membatalkan' : canCancel ? 'Batalkan Booking' : 'Batalkan (GA)'}
                 </Button>
               ) : (
                 <span />

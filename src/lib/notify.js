@@ -105,6 +105,16 @@ export async function notifyBookingCreated(b) {
   }
 }
 
+// GA membatalkan booking milik pemohon → beri tahu pemohon.
+export async function notifyCancelledByGa(b) {
+  await safeSend([b.requester_id], buildCard({
+    title: '🚫 Booking Anda dibatalkan oleh GA',
+    template: 'red',
+    lines: `**Kendaraan:** ${b.vehicle_name}\n**Waktu:** ${fmtRange(b.start_time, b.end_time)}`,
+    button: riwayatButton(),
+  }));
+}
+
 // GA mengganti armada pada booking yang sudah Approved → beri tahu pemohon.
 export async function notifyVehicleChanged(b, reason) {
   await safeSend([b.requester_id], buildCard({
